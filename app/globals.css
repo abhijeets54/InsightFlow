@@ -1,0 +1,368 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand Colors - Jasmine Yellow Theme */
+  --color-jasmine-50: #FFFBF0;
+  --color-jasmine-100: #FFF6DC;
+  --color-jasmine-200: #FEEFC8;
+  --color-jasmine-300: #FDE8B4;
+  --color-jasmine-400: #FDE09C;
+  --color-jasmine-500: #FDCF72;
+  --color-jasmine-600: #F4B93E;
+  --color-jasmine-700: #E39D1A;
+  --color-jasmine-800: #B87A15;
+  --color-jasmine-900: #8D5D10;
+
+  --color-forest-50: #E8F5E9;
+  --color-forest-100: #C8E6C9;
+  --color-forest-200: #A5D6A7;
+  --color-forest-300: #81C784;
+  --color-forest-400: #4CAF50;
+  --color-forest-500: #1B5E20;
+  --color-forest-600: #154B18;
+  --color-forest-700: #0F3810;
+  --color-forest-800: #0A260B;
+  --color-forest-900: #051306;
+
+  --color-navy-50: #E3F2FD;
+  --color-navy-100: #BBDEFB;
+  --color-navy-200: #90CAF9;
+  --color-navy-300: #64B5F6;
+  --color-navy-400: #42A5F5;
+  --color-navy-500: #1565C0;
+  --color-navy-600: #0D47A1;
+  --color-navy-700: #0A3A7F;
+  --color-navy-800: #072D5D;
+  --color-navy-900: #05203B;
+
+  --color-maroon-50: #FCE4EC;
+  --color-maroon-100: #F8BBD0;
+  --color-maroon-200: #F48FB1;
+  --color-maroon-300: #F06292;
+  --color-maroon-400: #EC407A;
+  --color-maroon-500: #6D1F3D;
+  --color-maroon-600: #5A1933;
+  --color-maroon-700: #471328;
+  --color-maroon-800: #340E1D;
+  --color-maroon-900: #210812;
+
+  --color-rose-50: #FFF0F3;
+  --color-rose-100: #FFE1E8;
+  --color-rose-200: #FFC3D1;
+  --color-rose-300: #FFA5BA;
+  --color-rose-400: #FF87A3;
+  --color-rose-500: #B8566E;
+  --color-rose-600: #9A4759;
+  --color-rose-700: #7C3844;
+  --color-rose-800: #5E2A2F;
+  --color-rose-900: #401B1A;
+
+  --color-brown-50: #EFEBE9;
+  --color-brown-100: #D7CCC8;
+  --color-brown-200: #BCAAA4;
+  --color-brown-300: #A1887F;
+  --color-brown-400: #8D6E63;
+  --color-brown-500: #4E342E;
+  --color-brown-600: #3E2723;
+  --color-brown-700: #2F1E1B;
+  --color-brown-800: #201513;
+  --color-brown-900: #110C0B;
+
+  --color-neutral-50: #FAFAFA;
+  --color-neutral-100: #F5F5F5;
+  --color-neutral-200: #EEEEEE;
+  --color-neutral-300: #E0E0E0;
+  --color-neutral-400: #BDBDBD;
+  --color-neutral-500: #9E9E9E;
+  --color-neutral-600: #757575;
+  --color-neutral-700: #616161;
+  --color-neutral-800: #424242;
+  --color-neutral-900: #212121;
+
+  --color-success: #2E7D32;
+  --color-warning: #F57C00;
+  --color-error: #C62828;
+  --color-info: #1976D2;
+
+  /* Font Families */
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-display: 'Poppins', sans-serif;
+  --font-mono: 'Fira Code', monospace;
+
+  /* Shadows with depth */
+  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-large: 0 8px 32px rgba(0, 0, 0, 0.16);
+  --shadow-xl: 0 12px 48px rgba(0, 0, 0, 0.20);
+  --shadow-glow-green: 0 0 20px rgba(27, 94, 32, 0.3);
+  --shadow-glow-yellow: 0 0 30px rgba(253, 207, 114, 0.4);
+}
+
+/* Advanced Keyframe Animations */
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+  }
+  to { 
+    opacity: 1; 
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes wiggle {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-3deg);
+  }
+  75% {
+    transform: rotate(3deg);
+  }
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Utility Animation Classes */
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+.animate-fade-in-down {
+  animation: fadeInDown 0.8s ease-out forwards;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.8s ease-out forwards;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.8s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.5s ease-out forwards;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulse 3s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s linear infinite;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  background-size: 1000px 100%;
+}
+
+.animate-spin-slow {
+  animation: spin 3s linear infinite;
+}
+
+.animate-bounce-slow {
+  animation: bounce 2s ease-in-out infinite;
+}
+
+.animate-wiggle {
+  animation: wiggle 1s ease-in-out;
+}
+
+.animate-gradient {
+  animation: gradient 3s ease infinite;
+  background-size: 200% 200%;
+}
+
+/* Stagger delays for sequential animations */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+.delay-600 { animation-delay: 600ms; }
+.delay-700 { animation-delay: 700ms; }
+.delay-800 { animation-delay: 800ms; }
+
+/* Smooth transitions */
+.transition-all-slow {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-smooth {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hover effects */
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 20px rgba(27, 94, 32, 0.4);
+}
+
+/* Skeleton loader */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Glassmorphism */
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-jasmine-500);
+}
+
+/* Remove default styles that might interfere */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Focus visible for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--color-forest-500);
+  outline-offset: 2px;
+}

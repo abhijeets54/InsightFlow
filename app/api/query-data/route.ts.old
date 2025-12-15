@@ -1,0 +1,196 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { getServiceSupabase } from '@/lib/supabase';
+import { callGemini } from '@/lib/gemini-rest';
+
+// Initialize Gemini AI with API key
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
+
+export async function POST(request: NextRequest) {
+  try {
+    const { query, datasetId, userId } = await request.json();
+
+    if (!query || !datasetId || !userId) {
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    const supabase = getServiceSupabase();
+
+    // Fetch dataset - verify user owns it
+    const { data: dataset, error: datasetError } = await supabase
+      .from('datasets')
+      .select('*')
+      .eq('id', datasetId)
+      .eq('user_id', userId)
+      .single();
+
+    if (datasetError || !dataset) {
+      return NextResponse.json(
+        { error: 'Dataset not found or access denied' },
+        { status: 403 }
+      );
+    }
+
+    // Parse the data_rows (they're stored as JSON strings)
+    const dataRows = dataset.data_rows.map((row: string) =>
+      typeof row === 'string' ? JSON.parse(row) : row
+    );
+
+    // Prepare data summary for AI
+    const dataSummary = {
+      columns: dataset.column_names,
+      types: dataset.column_types,
+      row_count: dataRows.length,
+      sample_rows: dataRows.slice(0, 5),
+    };
+
+    // Build prompt for Gemini
+    const prompt = `You are a data analyst assistant. Answer concisely and clearly.
+
+User's question: "${query}"
+
+Dataset: ${dataset.dataset_name}
+Columns: ${dataSummary.columns.join(', ')}
+Types: ${dataSummary.types.join(', ')}
+Total rows: ${dataSummary.row_count}
+
+Sample data (first 5 rows):
+${JSON.stringify(dataSummary.sample_rows, null, 2)}
+
+IMPORTANT: Format your response EXACTLY like this:
+
+ANSWER:
+- Provide a clear, well-formatted answer
+- Use bullet points for clarity
+- Keep it concise (2-4 sentences max)
+- Include specific numbers/values from the data
+
+INSIGHT:
+[One key insight in 1 sentence]
+
+CHART_TYPE: [Choose ONE: line/bar/pie/area/none]
+X_AXIS: [Exact column name from the data, or "none"]
+Y_AXIS: [Exact column name from the data, or "none"]
+
+Example:
+ANSWER:
+- Total sales across all regions: $45,234.50
+- East region leads with $18,500
+- Furniture category shows 25% higher profit margins
+
+INSIGHT: Electronics category has highest sales volume but Furniture shows better profitability
+
+CHART_TYPE: bar
+X_AXIS: Region
+Y_AXIS: Sales`;
+
+    // Call Gemini API - try SDK first, then fallback to REST API
+    let responseText;
+
+    // Try SDK models first - using correct 2025 model names
+    const sdkModelsToTry = [
+      'gemini-2.5-flash',      // Best price-performance (recommended)
+      'gemini-2.5-flash-lite', // Ultra-fast, cost-efficient
+      'gemini-2.0-flash',      // Second-generation workhorse
+      'gemini-2.0-flash-lite', // Compact, low-latency
+      'gemini-2.5-pro'         // Advanced model (may have lower free tier limits)
+    ];
+
+    let sdkWorked = false;
+    for (const modelName of sdkModelsToTry) {
+      try {
+        console.log(`Trying SDK model: ${modelName}`);
+        const model = genAI.getGenerativeModel({ model: modelName });
+        const result = await model.generateContent(prompt);
+        responseText = result.response.text();
+        console.log(`✓ Success with SDK model: ${modelName}`);
+        sdkWorked = true;
+        break;
+      } catch (error: any) {
+        console.log(`✗ Failed with SDK ${modelName}:`, error.message);
+        continue;
+      }
+    }
+
+    // If SDK failed, try REST API fallback
+    if (!sdkWorked) {
+      console.log('SDK failed, trying REST API fallback...');
+      try {
+        responseText = await callGemini(prompt, GEMINI_API_KEY);
+        console.log('✓ Success with REST API fallback');
+      } catch (error: any) {
+        console.log('✗ REST API also failed:', error.message);
+        throw new Error(`All Gemini API attempts failed. Last error: ${error.message}`);
+      }
+    }
+
+    if (!responseText) {
+      throw new Error('No response from Gemini API');
+    }
+
+    // Parse AI response
+    const parsed = parseGeminiResponse(responseText);
+
+    // Store in chat history
+    const { error: chatError } = await supabase.from('chat_history').insert({
+      user_id: userId,
+      dataset_id: datasetId,
+      user_query: query,
+      ai_response: parsed.answer,
+      response_type: parsed.chartType && parsed.chartType !== 'none' ? 'chart' : 'text',
+      suggested_chart_config: parsed.chartType && parsed.chartType !== 'none'
+        ? {
+            type: parsed.chartType,
+            xKey: parsed.xAxis,
+            yKey: parsed.yAxis,
+          }
+        : null,
+    });
+
+    if (chatError) {
+      console.error('Chat history error:', chatError);
+    }
+
+    return NextResponse.json({
+      answer: parsed.answer,
+      insight: parsed.insight,
+      chartType: parsed.chartType !== 'none' ? parsed.chartType : null,
+      chartConfig: parsed.chartType && parsed.chartType !== 'none'
+        ? {
+            type: parsed.chartType,
+            xKey: parsed.xAxis,
+            yKey: parsed.yAxis,
+          }
+        : null,
+    });
+  } catch (error: any) {
+    console.error('Query error:', error);
+    return NextResponse.json(
+      { error: error.message || 'Failed to process query' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * Parse Gemini's structured response
+ */
+function parseGeminiResponse(text: string) {
+  const answerMatch = text.match(/ANSWER:\s*([\s\S]*?)(?=INSIGHT:|CHART_TYPE:|$)/i);
+  const insightMatch = text.match(/INSIGHT:\s*([\s\S]*?)(?=CHART_TYPE:|X_AXIS:|Y_AXIS:|$)/i);
+  const chartMatch = text.match(/CHART_TYPE:\s*(line|bar|pie|scatter|area|none)/i);
+  const xAxisMatch = text.match(/X_AXIS:\s*([^\n]+)/i);
+  const yAxisMatch = text.match(/Y_AXIS:\s*([^\n]+)/i);
+
+  return {
+    answer: answerMatch ? answerMatch[1].trim() : text,
+    insight: insightMatch ? insightMatch[1].trim() : null,
+    chartType: chartMatch ? chartMatch[1].toLowerCase() : 'none',
+    xAxis: xAxisMatch ? xAxisMatch[1].trim() : null,
+    yAxis: yAxisMatch ? yAxisMatch[1].trim() : null,
+  };
+}

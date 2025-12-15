@@ -1,0 +1,229 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { getServiceSupabase } from '@/lib/supabase';
+import { callGemini } from '@/lib/gemini-rest';
+import { calculateDatasetStatistics, formatStatsForAI } from '@/utils/dataStatistics';
+
+// Initialize Gemini AI with API key
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
+
+export async function POST(request: NextRequest) {
+  try {
+    const { query, datasetId, userId, conversationHistory, conversationId, requestFollowUps } = await request.json();
+
+    if (!query || !datasetId || !userId) {
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    const supabase = getServiceSupabase();
+
+    // Fetch dataset - verify user owns it
+    const { data: dataset, error: datasetError } = await supabase
+      .from('datasets')
+      .select('*')
+      .eq('id', datasetId)
+      .eq('user_id', userId)
+      .single();
+
+    if (datasetError || !dataset) {
+      return NextResponse.json(
+        { error: 'Dataset not found or access denied' },
+        { status: 403 }
+      );
+    }
+
+    // Parse the data_rows (they're stored as JSON strings)
+    const dataRows = dataset.data_rows.map((row: string) =>
+      typeof row === 'string' ? JSON.parse(row) : row
+    );
+
+    // NEW: Calculate comprehensive statistics on FULL dataset (FREE!)
+    const fullStats = calculateDatasetStatistics(dataRows, dataset.column_names);
+    const statsForAI = formatStatsForAI(fullStats);
+
+    console.log(`AI analyzing FULL dataset: ${fullStats.totalRows} rows, ${fullStats.totalColumns} columns`);
+
+    // NEW: Build conversation context
+    let contextSection = '';
+    if (conversationHistory && conversationHistory.length > 0) {
+      contextSection = '\n\nPrevious conversation context:\n';
+      conversationHistory.forEach((msg: any, idx: number) => {
+        contextSection += `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.text}\n`;
+      });
+      contextSection += '\nUse this context to provide a more relevant answer.\n';
+    }
+
+    // Build prompt for Gemini with FULL dataset statistics
+    const prompt = `You are a data analyst assistant. Answer concisely and clearly.${contextSection}
+
+User's question: "${query}"
+
+Dataset: ${dataset.dataset_name}
+
+FULL DATASET STATISTICS (not just a sample!):
+${statsForAI}
+
+Representative sample rows (from beginning, middle, and end of dataset):
+${JSON.stringify(fullStats.representativeSample, null, 2)}
+
+IMPORTANT: Format your response EXACTLY like this:
+
+ANSWER:
+- Provide a clear, well-formatted answer
+- Use bullet points for clarity
+- Keep it concise (2-4 sentences max)
+- Include specific numbers/values from the data
+
+INSIGHT:
+[One key insight in 1 sentence]
+
+CHART_TYPE: [Choose ONE: line/bar/pie/area/none]
+X_AXIS: [Exact column name from the data, or "none"]
+Y_AXIS: [Exact column name from the data, or "none"]
+
+${requestFollowUps ? `
+FOLLOW_UP_1: [A relevant follow-up question the user might ask]
+FOLLOW_UP_2: [Another relevant follow-up question]
+FOLLOW_UP_3: [A third relevant follow-up question]
+` : ''}
+
+Example:
+ANSWER:
+- Total sales across all regions: $45,234.50
+- East region leads with $18,500
+- Furniture category shows 25% higher profit margins
+
+INSIGHT: Electronics category has highest sales volume but Furniture shows better profitability
+
+CHART_TYPE: bar
+X_AXIS: Region
+Y_AXIS: Sales
+
+${requestFollowUps ? `FOLLOW_UP_1: Which products drive the most profit in the Furniture category?
+FOLLOW_UP_2: How do seasonal trends affect Electronics sales?
+FOLLOW_UP_3: What is the profit margin comparison across all categories?` : ''}`;
+
+    // Call Gemini API - try SDK first, then fallback to REST API
+    let responseText;
+
+    // Try SDK models first - using Gemini 2.5 Flash for best free tier
+    const sdkModelsToTry = [
+      'gemini-2.5-flash',      // Best for free tier (250 requests/day)
+      'gemini-2.5-flash-lite', // Ultra-fast (1000 requests/day)
+      'gemini-2.0-flash',      // Fallback
+      'gemini-2.0-flash-lite', // Fallback
+      'gemini-2.5-pro'         // Advanced (lower limits)
+    ];
+
+    let sdkWorked = false;
+    for (const modelName of sdkModelsToTry) {
+      try {
+        console.log(`Trying SDK model: ${modelName}`);
+        const model = genAI.getGenerativeModel({ model: modelName });
+        const result = await model.generateContent(prompt);
+        responseText = result.response.text();
+        console.log(`✓ Success with SDK model: ${modelName}`);
+        sdkWorked = true;
+        break;
+      } catch (error: any) {
+        console.log(`✗ Failed with SDK ${modelName}:`, error.message);
+        continue;
+      }
+    }
+
+    // If SDK failed, try REST API fallback
+    if (!sdkWorked) {
+      console.log('SDK failed, trying REST API fallback...');
+      try {
+        responseText = await callGemini(prompt, GEMINI_API_KEY);
+        console.log('✓ Success with REST API fallback');
+      } catch (error: any) {
+        console.log('✗ REST API also failed:', error.message);
+        throw new Error(`All Gemini API attempts failed. Last error: ${error.message}`);
+      }
+    }
+
+    if (!responseText) {
+      throw new Error('No response from Gemini API');
+    }
+
+    // Parse AI response with follow-ups
+    const parsed = parseGeminiResponse(responseText, requestFollowUps);
+
+    // Store in chat history
+    const { error: chatError } = await supabase.from('chat_history').insert({
+      user_id: userId,
+      dataset_id: datasetId,
+      user_query: query,
+      ai_response: parsed.answer,
+      response_type: parsed.chartType && parsed.chartType !== 'none' ? 'chart' : 'text',
+      suggested_chart_config: parsed.chartType && parsed.chartType !== 'none'
+        ? {
+            type: parsed.chartType,
+            xKey: parsed.xAxis,
+            yKey: parsed.yAxis,
+          }
+        : null,
+    });
+
+    if (chatError) {
+      console.error('Chat history error:', chatError);
+    }
+
+    return NextResponse.json({
+      answer: parsed.answer,
+      insight: parsed.insight,
+      chartType: parsed.chartType !== 'none' ? parsed.chartType : null,
+      chartConfig: parsed.chartType && parsed.chartType !== 'none'
+        ? {
+            type: parsed.chartType,
+            xKey: parsed.xAxis,
+            yKey: parsed.yAxis,
+          }
+        : null,
+      followUpQuestions: parsed.followUpQuestions || [], // NEW: Return follow-up questions
+    });
+  } catch (error: any) {
+    console.error('Query error:', error);
+    return NextResponse.json(
+      { error: error.message || 'Failed to process query' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * Parse Gemini's structured response with follow-up questions
+ */
+function parseGeminiResponse(text: string, includeFollowUps: boolean = false) {
+  const answerMatch = text.match(/ANSWER:\s*([\s\S]*?)(?=INSIGHT:|CHART_TYPE:|$)/i);
+  const insightMatch = text.match(/INSIGHT:\s*([\s\S]*?)(?=CHART_TYPE:|X_AXIS:|Y_AXIS:|FOLLOW_UP|$)/i);
+  const chartMatch = text.match(/CHART_TYPE:\s*(line|bar|pie|scatter|area|none)/i);
+  const xAxisMatch = text.match(/X_AXIS:\s*([^\n]+)/i);
+  const yAxisMatch = text.match(/Y_AXIS:\s*([^\n]+)/i);
+
+  // NEW: Parse follow-up questions
+  const followUpQuestions: string[] = [];
+  if (includeFollowUps) {
+    const followUp1Match = text.match(/FOLLOW_UP_1:\s*([^\n]+)/i);
+    const followUp2Match = text.match(/FOLLOW_UP_2:\s*([^\n]+)/i);
+    const followUp3Match = text.match(/FOLLOW_UP_3:\s*([^\n]+)/i);
+
+    if (followUp1Match) followUpQuestions.push(followUp1Match[1].trim());
+    if (followUp2Match) followUpQuestions.push(followUp2Match[1].trim());
+    if (followUp3Match) followUpQuestions.push(followUp3Match[1].trim());
+  }
+
+  return {
+    answer: answerMatch ? answerMatch[1].trim() : text,
+    insight: insightMatch ? insightMatch[1].trim() : null,
+    chartType: chartMatch ? chartMatch[1].toLowerCase() : 'none',
+    xAxis: xAxisMatch ? xAxisMatch[1].trim() : null,
+    yAxis: yAxisMatch ? yAxisMatch[1].trim() : null,
+    followUpQuestions,
+  };
+}

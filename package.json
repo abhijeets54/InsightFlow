@@ -1,0 +1,51 @@
+{
+  "name": "data-analysis-platform",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@nivo/bar": "^0.99.0",
+    "@nivo/bump": "^0.99.0",
+    "@nivo/core": "^0.99.0",
+    "@nivo/funnel": "^0.99.0",
+    "@nivo/heatmap": "^0.99.0",
+    "@nivo/line": "^0.99.0",
+    "@nivo/pie": "^0.99.0",
+    "@nivo/sankey": "^0.99.0",
+    "@nivo/scatterplot": "^0.99.0",
+    "@nivo/stream": "^0.99.0",
+    "@nivo/waffle": "^0.99.0",
+    "@supabase/supabase-js": "^2.84.0",
+    "@upstash/redis": "^1.35.7",
+    "axios": "^1.13.2",
+    "html2canvas": "^1.4.1",
+    "ioredis": "^5.8.2",
+    "jspdf": "^3.0.4",
+    "nanoid": "^5.1.6",
+    "next": "16.0.4",
+    "papaparse": "^5.5.3",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "react-dropzone": "^14.3.8",
+    "recharts": "^3.5.0",
+    "xlsx": "^0.18.5",
+    "zustand": "^5.0.8"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/papaparse": "^5.5.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.4",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
