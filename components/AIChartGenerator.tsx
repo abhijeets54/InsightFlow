@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import ChartDisplay from './dashboard/ChartDisplay';
+import AdvancedChartDisplay from './dashboard/AdvancedChartDisplay';
 import { processChartData } from '@/utils/chartDataProcessor';
 
 interface AIChartGeneratorProps {
@@ -215,11 +216,19 @@ export default function AIChartGenerator({
 
       {/* Chart Display */}
       <div className="bg-white rounded-lg p-6 border border-gray-200">
-        <ChartDisplay
-          type={chartType}
-          data={chartData}
-          title={spec.title}
-        />
+        {chartType === 'stacked-bar' ? (
+          <AdvancedChartDisplay
+            type={chartType}
+            data={chartData}
+            title={spec.title}
+          />
+        ) : (
+          <ChartDisplay
+            type={chartType as 'bar' | 'line' | 'area' | 'pie' | 'scatter'}
+            data={chartData}
+            title={spec.title}
+          />
+        )}
       </div>
 
       {/* AI Rationale */}

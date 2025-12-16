@@ -117,7 +117,11 @@ export default function SmartChartDisplay({
       <div className="text-center py-8">
         <p className="text-sm text-red-600">{error}</p>
         <p className="text-xs text-gray-500 mt-1">Showing basic chart</p>
-        <ChartDisplay type={chartType} data={data} title={chartName} />
+        <ChartDisplay 
+          type={chartType as 'bar' | 'line' | 'area' | 'pie' | 'scatter'} 
+          data={data} 
+          title={chartName} 
+        />
       </div>
     );
   }

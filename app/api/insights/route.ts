@@ -46,9 +46,9 @@ Dataset Statistics (FULL DATASET):
 
 Column Statistics (calculated from all ${stats.totalRows} rows):
 ${columns.slice(0, 5).map((col) => {
-  const colStats = stats.columnStats[col];
+  const colStats = stats.columnStats.find(cs => cs.column === col);
   if (!colStats) return '';
-  return `${col}: Min=${colStats.min}, Max=${colStats.max}, Avg=${colStats.average?.toFixed(2)}`;
+  return `${col}: Min=${colStats.min}, Max=${colStats.max}, Avg=${colStats.mean?.toFixed(2)}`;
 }).join('\n')}
 
 Sample Data (first 3 rows for reference):

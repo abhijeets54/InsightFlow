@@ -76,7 +76,7 @@ export function parseCSV(fileContent: string): Promise<ParsedFileData> {
           columnCount: columns.length,
         });
       },
-      error: (error) => {
+      error: (error: any) => {
         reject(error);
       },
     });

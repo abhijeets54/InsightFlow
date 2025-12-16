@@ -126,16 +126,27 @@ const DEFAULT_TTL = parseInt(process.env.REDIS_DATASET_TTL || '86400');
  */
 
 /**
+ * Dataset cache structure
+ */
+export interface CachedDataset {
+  rows: any[];
+  columns: string[];
+  types: string[];
+  rowCount: number;
+  columnCount: number;
+}
+
+/**
  * Cache full dataset in Redis
  * @param userId - User ID (for namespacing)
  * @param datasetId - Dataset ID
- * @param fullData - Array of data rows
+ * @param fullData - Dataset object with rows, columns, types, etc.
  * @param ttl - Time to live in seconds (default: 24 hours)
  */
 export async function cacheDataset(
   userId: string,
   datasetId: string,
-  fullData: any[],
+  fullData: CachedDataset,
   ttl: number = DEFAULT_TTL
 ): Promise<boolean> {
   if (!isRedisEnabled()) {
@@ -157,7 +168,7 @@ export async function cacheDataset(
       return false;
     }
 
-    console.log(`[Redis] ✅ Cached dataset ${datasetId} (${fullData.length} rows, ${sizeKB} KB)`);
+    console.log(`[Redis] ✅ Cached dataset ${datasetId} (${fullData.rowCount} rows, ${sizeKB} KB)`);
     return true;
   } catch (error) {
     console.error('[Redis] ❌ Failed to cache dataset:', error);
@@ -169,12 +180,12 @@ export async function cacheDataset(
  * Get cached dataset from Redis
  * @param userId - User ID
  * @param datasetId - Dataset ID
- * @returns Dataset rows or null if not found
+ * @returns Dataset object or null if not found
  */
 export async function getCachedDataset(
   userId: string,
   datasetId: string
-): Promise<any[] | null> {
+): Promise<CachedDataset | null> {
   if (!isRedisEnabled()) {
     return null;
   }
@@ -192,8 +203,8 @@ export async function getCachedDataset(
     }
 
     if (cached) {
-      const data = JSON.parse(cached);
-      console.log(`[Redis] 🎯 Cache HIT for dataset ${datasetId} (${data.length} rows)`);
+      const data: CachedDataset = JSON.parse(cached);
+      console.log(`[Redis] 🎯 Cache HIT for dataset ${datasetId} (${data.rowCount} rows)`);
       return data;
     }
 

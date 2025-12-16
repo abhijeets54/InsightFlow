@@ -419,7 +419,8 @@ export function getKeyManager(): GeminiKeyManager {
 export function getGeminiKey(
   feature: 'INSIGHTS' | 'FORECAST' | 'CHART_RECOMMENDATIONS' | 'CHAT' |
            'NATURAL_LANGUAGE_QUERY' | 'CONTEXT_ANALYTICS' | 'CONTEXT_VISUALIZATIONS' |
-           'NARRATIVE_GENERATION' | 'ANOMALY_DETECTION' | 'CORRELATION_ANALYSIS'
+           'NARRATIVE_GENERATION' | 'ANOMALY_DETECTION' | 'CORRELATION_ANALYSIS' |
+           'LIDA_SUMMARIZER' | 'LIDA_GOAL_EXPLORER' | 'LIDA_VISGENERATOR'
 ): string | null {
   const manager = getKeyManager();
   return manager.getKey(feature);

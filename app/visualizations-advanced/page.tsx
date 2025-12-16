@@ -35,8 +35,7 @@ export default function VisualizationsAdvancedPage() {
   const router = useRouter();
 
   // Chart state - ALL chart types
-  type ChartType = 'bar' | 'line' | 'area' | 'pie' | 'scatter' | 'stacked-bar' | 'box-plot' |
-                   'heatmap' | 'dual-axis' | 'waterfall';
+  type ChartType = 'bar' | 'line' | 'area' | 'pie' | 'scatter' | 'stacked-bar' | 'box-plot' | 'heatmap';
 
   const [selectedChartType, setSelectedChartType] = useState<ChartType>('bar');
   const [selectedColumns, setSelectedColumns] = useState<string[]>([]);

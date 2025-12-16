@@ -109,8 +109,6 @@ export default function CorrelationHeatmap({ data, columns }: CorrelationHeatmap
       <div className="h-96">
         <ResponsiveHeatMap
           data={correlationData.heatmapData}
-          keys={correlationData.columns}
-          indexBy="id"
           margin={{ top: 100, right: 60, bottom: 60, left: 100 }}
           forceSquare={true}
           axisTop={{
@@ -157,9 +155,6 @@ export default function CorrelationHeatmap({ data, columns }: CorrelationHeatmap
           animate={true}
           motionConfig="gentle"
           hoverTarget="cell"
-          cellOpacity={1}
-          cellBorderColor={{ from: 'color', modifiers: [['darker', 0.4]] }}
-          labelTextColor={{ from: 'color', modifiers: [['darker', 1.8]] }}
           tooltip={({ cell }) => (
             <div className="bg-white px-4 py-3 rounded-lg shadow-lg border border-gray-200">
               <div className="font-semibold text-gray-800 mb-1">

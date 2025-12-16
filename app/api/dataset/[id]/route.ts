@@ -12,13 +12,13 @@ import { getServiceSupabase } from '@/lib/supabase';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
     const extendTTL = searchParams.get('extendTTL') !== 'false'; // Default true
-    const datasetId = params.id;
+    const { id: datasetId } = await params;
 
     if (!userId) {
       return NextResponse.json(

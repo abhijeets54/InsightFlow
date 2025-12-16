@@ -11,7 +11,12 @@ interface NavItem {
   icon: React.ReactNode;
 }
 
-export default function Navigation({ user }: { user: any }) {
+interface NavigationProps {
+  user: any;
+  onLogout?: () => void | Promise<void>;
+}
+
+export default function Navigation({ user, onLogout }: NavigationProps) {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 

@@ -8,6 +8,7 @@ import Navigation from '@/components/layout/Navigation';
 import Footer from '@/components/layout/Footer';
 import Card from '@/components/ui/Card';
 import ChartDisplay from '@/components/dashboard/ChartDisplay';
+import AdvancedChartDisplay from '@/components/dashboard/AdvancedChartDisplay';
 import ColumnSelector from '@/components/ui/ColumnSelector';
 import ShareButton from '@/components/ui/ShareButton';
 import ChartRecommendations from '@/components/dashboard/ChartRecommendations';
@@ -30,7 +31,7 @@ export default function VisualizationsPage() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { uploadedData, getFullData } = useDataStore();
-  const [selectedChartType, setSelectedChartType] = useState<'bar' | 'line' | 'area' | 'pie'>('bar');
+  const [selectedChartType, setSelectedChartType] = useState<'bar' | 'line' | 'area' | 'pie' | 'scatter' | 'stacked-bar' | 'box-plot' | 'heatmap'>('bar');
   const router = useRouter();
 
   // Helper to get the full dataset
@@ -61,6 +62,10 @@ export default function VisualizationsPage() {
     { id: 'line', name: 'Line Chart', icon: '📈', color: 'from-navy-500 to-navy-600' },
     { id: 'area', name: 'Area Chart', icon: '📉', color: 'from-maroon-500 to-maroon-600' },
     { id: 'pie', name: 'Pie Chart', icon: '🥧', color: 'from-rose-500 to-rose-600' },
+    { id: 'scatter', name: 'Scatter Plot', icon: '⚡', color: 'from-cyan-500 to-cyan-600' },
+    { id: 'stacked-bar', name: 'Stacked Bar', icon: '📋', color: 'from-teal-500 to-teal-600' },
+    { id: 'box-plot', name: 'Box Plot', icon: '📦', color: 'from-indigo-500 to-indigo-600' },
+    { id: 'heatmap', name: 'Correlation Matrix', icon: '🔥', color: 'from-orange-500 to-orange-600' },
   ];
 
   useEffect(() => {
@@ -108,7 +113,7 @@ export default function VisualizationsPage() {
     setShowToast(true);
   };
 
-  const handleChartTypeChange = (newType: 'bar' | 'line' | 'area' | 'pie') => {
+  const handleChartTypeChange = (newType: 'bar' | 'line' | 'area' | 'pie' | 'scatter' | 'stacked-bar' | 'box-plot' | 'heatmap') => {
     const previousType = selectedChartType;
     setSelectedChartType(newType);
     setChartHistory(prev => [...prev, newType]);
@@ -476,13 +481,23 @@ export default function VisualizationsPage() {
                   ) : (() => {
                     // Manual Mode (original behavior)
                     const processed = getProcessedChartData(getDataForVisualization());
+                    const isAdvanced = ['scatter', 'stacked-bar', 'box-plot', 'heatmap'].includes(selectedChartType);
+                    
                     return (
                       <>
-                        <ChartDisplay
-                          type={selectedChartType}
-                          data={processed.data}
-                          title={chartTypes.find(c => c.id === selectedChartType)?.name}
-                        />
+                        {isAdvanced ? (
+                          <AdvancedChartDisplay
+                            type={selectedChartType}
+                            data={processed.data}
+                            title={chartTypes.find(c => c.id === selectedChartType)?.name}
+                          />
+                        ) : (
+                          <ChartDisplay
+                            type={selectedChartType as 'line' | 'bar' | 'pie' | 'scatter' | 'area'}
+                            data={processed.data}
+                            title={chartTypes.find(c => c.id === selectedChartType)?.name}
+                          />
+                        )}
                         {processed.info && (
                           <div className="mt-4 px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg">
                             <div className="flex items-center gap-2 text-sm">
@@ -655,7 +670,18 @@ export default function VisualizationsPage() {
                   onApplySpec={(spec) => {
                     // Apply the AI-generated chart specification
                     setAiSpec(spec);
-                    setSelectedChartType(spec.chart_type);
+                    
+                    // Validate chart type before setting
+                    const validChartTypes: ('bar' | 'line' | 'area' | 'pie' | 'scatter' | 'stacked-bar' | 'box-plot' | 'heatmap')[] = [
+                      'bar', 'line', 'area', 'pie', 'scatter', 'stacked-bar', 'box-plot', 'heatmap'
+                    ];
+                    const chartTypeStr = String(spec.chart_type);
+                    if (validChartTypes.includes(chartTypeStr as any)) {
+                      setSelectedChartType(chartTypeStr as 'bar' | 'line' | 'area' | 'pie' | 'scatter' | 'stacked-bar' | 'box-plot' | 'heatmap');
+                    } else {
+                      // Fallback to bar chart if type is not supported
+                      setSelectedChartType('bar');
+                    }
 
                     // Extract and apply columns from spec
                     if (spec.columns) {

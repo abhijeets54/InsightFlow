@@ -87,7 +87,7 @@ export function aggregateCategoricalData(
   });
 
   // Sort by value (descending)
-  aggregated.sort((a, b) => b[valueColumn] - a[valueColumn]);
+  aggregated.sort((a, b) => Number(b[valueColumn]) - Number(a[valueColumn]));
 
   const originalCount = aggregated.length;
   let hasOthers = false;
@@ -99,8 +99,8 @@ export function aggregateCategoricalData(
     const rest = aggregated.slice(limit);
 
     // Aggregate "Others"
-    const othersValue = rest.reduce((sum, item) => sum + item[valueColumn], 0);
-    const othersCount = rest.reduce((sum, item) => sum + item._count, 0);
+    const othersValue = rest.reduce((sum, item) => sum + Number(item[valueColumn]), 0);
+    const othersCount = rest.reduce((sum, item) => sum + Number(item._count), 0);
 
     processedData = [
       ...topN,
@@ -108,8 +108,7 @@ export function aggregateCategoricalData(
         [categoryColumn]: 'Others',
         [valueColumn]: othersValue,
         _count: othersCount,
-        _isOthers: true,
-      }
+      } as any
     ];
 
     hasOthers = true;
@@ -196,7 +195,7 @@ export function processScatterData(
  */
 export function processChartData(
   data: any[],
-  chartType: 'bar' | 'line' | 'area' | 'pie' | 'scatter' | 'stacked-bar',
+  chartType: 'bar' | 'line' | 'area' | 'pie' | 'scatter' | 'stacked-bar' | 'box-plot' | 'heatmap' | 'histogram',
   options: {
     categoryColumn?: string;
     valueColumn?: string;
@@ -364,7 +363,7 @@ export function getRecommendedChartTypes(
  */
 export function autoDetectColumns(
   data: any[],
-  chartType: 'bar' | 'line' | 'area' | 'pie' | 'scatter'
+  chartType: 'bar' | 'line' | 'area' | 'pie' | 'scatter' | 'stacked-bar' | 'box-plot' | 'heatmap' | 'histogram'
 ): {
   categoryColumn: string | null;
   valueColumn: string | null;
