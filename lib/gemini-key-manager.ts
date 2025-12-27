@@ -61,6 +61,10 @@ class GeminiKeyManager {
       'NARRATIVE_GENERATION', // NEW: AI-powered narrative generation
       'ANOMALY_DETECTION',    // NEW: Anomaly detection
       'CORRELATION_ANALYSIS', // NEW: Correlation analysis
+      'CHART_AI_CONFIG',      // NEW: Chart AI Config (8-key pool for AI mode)
+      'LIDA_SUMMARIZER',      // LIDA: Dataset summarization
+      'LIDA_GOAL_EXPLORER',   // LIDA: Visualization goals
+      'CHART_AI_CONFIG',      // NEW: Chart AI Config (8-key pool for AI mode)
       'LIDA_SUMMARIZER',      // LIDA: Dataset summarization
       'LIDA_GOAL_EXPLORER',   // LIDA: Visualization goals
       'LIDA_VISGENERATOR'     // LIDA: Chart specification generation
@@ -420,7 +424,7 @@ export function getGeminiKey(
   feature: 'INSIGHTS' | 'FORECAST' | 'CHART_RECOMMENDATIONS' | 'CHAT' |
            'NATURAL_LANGUAGE_QUERY' | 'CONTEXT_ANALYTICS' | 'CONTEXT_VISUALIZATIONS' |
            'NARRATIVE_GENERATION' | 'ANOMALY_DETECTION' | 'CORRELATION_ANALYSIS' |
-           'LIDA_SUMMARIZER' | 'LIDA_GOAL_EXPLORER' | 'LIDA_VISGENERATOR'
+           'CHART_AI_CONFIG' | 'LIDA_SUMMARIZER' | 'LIDA_GOAL_EXPLORER' | 'LIDA_VISGENERATOR'
 ): string | null {
   const manager = getKeyManager();
   return manager.getKey(feature);
@@ -432,7 +436,8 @@ export function getGeminiKey(
 export function reportGeminiSuccess(
   feature: 'INSIGHTS' | 'FORECAST' | 'CHART_RECOMMENDATIONS' | 'CHAT' |
            'NATURAL_LANGUAGE_QUERY' | 'CONTEXT_ANALYTICS' | 'CONTEXT_VISUALIZATIONS' |
-           'NARRATIVE_GENERATION' | 'ANOMALY_DETECTION' | 'CORRELATION_ANALYSIS',
+           'NARRATIVE_GENERATION' | 'ANOMALY_DETECTION' | 'CORRELATION_ANALYSIS' |
+           'CHART_AI_CONFIG',
   responseTimeMs: number
 ) {
   const manager = getKeyManager();
@@ -445,7 +450,8 @@ export function reportGeminiSuccess(
 export function reportGeminiFailure(
   feature: 'INSIGHTS' | 'FORECAST' | 'CHART_RECOMMENDATIONS' | 'CHAT' |
            'NATURAL_LANGUAGE_QUERY' | 'CONTEXT_ANALYTICS' | 'CONTEXT_VISUALIZATIONS' |
-           'NARRATIVE_GENERATION' | 'ANOMALY_DETECTION' | 'CORRELATION_ANALYSIS'
+           'NARRATIVE_GENERATION' | 'ANOMALY_DETECTION' | 'CORRELATION_ANALYSIS' |
+           'CHART_AI_CONFIG'
 ) {
   const manager = getKeyManager();
   manager.reportFailure(feature);

@@ -52,9 +52,9 @@ export async function POST(request: NextRequest) {
     const prompt = buildChartPrompt(chartType, chartName, fullData, columns);
 
     // Get API key
-    const apiKey = getGeminiKey('LIDA_VISGENERATOR');
+    const apiKey = getGeminiKey('CHART_AI_CONFIG');
     if (!apiKey) {
-      throw new Error('No LIDA_VISGENERATOR API key available');
+      throw new Error('No CHART_AI_CONFIG API key available');
     }
 
     // Call AI
