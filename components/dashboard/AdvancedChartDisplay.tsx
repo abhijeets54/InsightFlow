@@ -13,7 +13,7 @@ import { calculateBoxPlot, calculateLinearRegression, getNumericColumns, generat
 
 interface AdvancedChartDisplayProps {
   type: 'bar' | 'line' | 'pie' | 'heatmap' | 'scatter' | 'area' | 'stacked-bar' | 'box-plot' |
-        'sankey' | 'waffle' | 'funnel' | 'stream' | 'dual-axis' | 'waterfall';
+        'sankey' | 'waffle' | 'funnel' | 'stream' | 'dual-axis' | 'waterfall' | 'grouped-bar' | 'grouped bar';
   data: any[];
   title?: string;
   xKey?: string;
@@ -475,6 +475,74 @@ export default function AdvancedChartDisplay({
             animate={true}
             motionConfig="gentle"
             groupMode="stacked"
+          />
+        );
+
+      case 'grouped-bar':
+      case 'grouped bar':
+        // Get all numeric keys for grouping
+        const groupKeys = numericKeys.slice(0, 5); // Limit to 5 for readability
+
+        // Clean data - ensure all numeric values are valid numbers
+        const cleanedGroupData = data.map(row => {
+          const cleanedRow: any = { [defaultXKey]: row[defaultXKey] };
+          groupKeys.forEach(key => {
+            const value = parseFloat(row[key]);
+            cleanedRow[key] = isNaN(value) ? 0 : value;
+          });
+          return cleanedRow;
+        });
+
+        return (
+          <ResponsiveBar
+            data={cleanedGroupData}
+            keys={groupKeys}
+            indexBy={defaultXKey}
+            margin={{ top: 50, right: 130, bottom: 50, left: 60 }}
+            padding={0.3}
+            valueScale={{ type: 'linear' }}
+            indexScale={{ type: 'band', round: true }}
+            colors={{ scheme: 'nivo' }}
+            borderColor={{ from: 'color', modifiers: [['darker', 1.6]] }}
+            axisTop={null}
+            axisRight={null}
+            axisBottom={{
+              tickSize: 5,
+              tickPadding: 5,
+              tickRotation: -45,
+              legend: defaultXKey,
+              legendPosition: 'middle',
+              legendOffset: 40
+            }}
+            axisLeft={{
+              tickSize: 5,
+              tickPadding: 5,
+              tickRotation: 0,
+              legend: 'Value',
+              legendPosition: 'middle',
+              legendOffset: -50
+            }}
+            labelSkipWidth={12}
+            labelSkipHeight={12}
+            labelTextColor={{ from: 'color', modifiers: [['darker', 1.6]] }}
+            legends={[{
+              dataFrom: 'keys',
+              anchor: 'bottom-right',
+              direction: 'column',
+              justify: false,
+              translateX: 120,
+              translateY: 0,
+              itemsSpacing: 2,
+              itemWidth: 100,
+              itemHeight: 20,
+              itemDirection: 'left-to-right',
+              itemOpacity: 0.85,
+              symbolSize: 20
+            }]}
+            theme={theme}
+            animate={true}
+            motionConfig="gentle"
+            groupMode="grouped"
           />
         );
 

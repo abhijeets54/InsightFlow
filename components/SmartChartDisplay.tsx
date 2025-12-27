@@ -12,6 +12,7 @@ interface SmartChartDisplayProps {
   userId: string;
   data: any[];
   columns: string[];
+  onChartReady?: () => void; // Callback when chart is ready
 }
 
 // Cache helper functions
@@ -61,6 +62,7 @@ export default function SmartChartDisplay({
   userId,
   data,
   columns,
+  onChartReady,
 }: SmartChartDisplayProps) {
   const [loading, setLoading] = useState(true);
   const [aiConfig, setAiConfig] = useState<any>(null);
@@ -155,6 +157,11 @@ export default function SmartChartDisplay({
       });
 
       setChartData(processedResult.data);
+    }
+
+    // Notify parent that chart is ready
+    if (onChartReady) {
+      onChartReady();
     }
   };
 

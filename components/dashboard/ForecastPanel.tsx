@@ -159,6 +159,24 @@ export default function ForecastPanel({ datasetId, userId, columns, onForecastGe
         <>
           {/* Results */}
           <div className="space-y-6">
+            {/* AI Column Selection Info */}
+            {forecastData.columnSelectionReasoning && !forecastData.columnSelectionReasoning.toLowerCase().includes('fallback') && (
+              <div className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <svg className="w-4 h-4 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                  <p className="text-sm text-blue-700 font-medium">AI Selected Metric:</p>
+                  <p className="text-sm text-blue-600">{forecastData.columnSelectionReasoning}</p>
+                  {forecastData.industry && forecastData.industry !== 'general' && (
+                    <span className="ml-auto text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-semibold">
+                      {forecastData.industry}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg border border-purple-200">
@@ -181,6 +199,53 @@ export default function ForecastPanel({ datasetId, userId, columns, onForecastGe
                 <p className="text-2xl font-bold text-orange-900">{forecastData.summary.avgPredicted.toFixed(2)}</p>
               </div>
             </div>
+
+            {/* Historical Patterns */}
+            {forecastData.historicalPatterns && (
+              <div className="p-4 bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-lg">
+                <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                  Historical Pattern Analysis
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                  <div>
+                    <p className="text-gray-500">Volatility</p>
+                    <p className="font-semibold text-gray-900 capitalize flex items-center gap-1">
+                      {forecastData.historicalPatterns.volatility}
+                      <span className={`w-2 h-2 rounded-full ${
+                        forecastData.historicalPatterns.volatility === 'low' ? 'bg-green-500' :
+                        forecastData.historicalPatterns.volatility === 'moderate' ? 'bg-yellow-500' : 'bg-red-500'
+                      }`}></span>
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Growth Rate</p>
+                    <p className="font-semibold text-gray-900">
+                      {forecastData.historicalPatterns.growthRate > 0 ? '+' : ''}
+                      {forecastData.historicalPatterns.growthRate.toFixed(2)}%
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Data Quality</p>
+                    <p className="font-semibold text-gray-900 capitalize flex items-center gap-1">
+                      {forecastData.historicalPatterns.dataQuality}
+                      <span className={`w-2 h-2 rounded-full ${
+                        forecastData.historicalPatterns.dataQuality === 'high' ? 'bg-green-500' :
+                        forecastData.historicalPatterns.dataQuality === 'medium' ? 'bg-yellow-500' : 'bg-red-500'
+                      }`}></span>
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Seasonality</p>
+                    <p className="font-semibold text-gray-900 capitalize">
+                      {forecastData.historicalPatterns.seasonality === 'none detected' ? 'None' : 'Detected'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Chart */}
             <div className="bg-white p-4 rounded-lg border border-neutral-200">

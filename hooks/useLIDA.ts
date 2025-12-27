@@ -26,6 +26,7 @@ interface UseLIDAReturn {
   exploreGoals: (numGoals?: number, persona?: string) => Promise<VisualizationGoal[]>;
   generateSpec: (goal: VisualizationGoal, selfEvaluate?: boolean) => Promise<EvaluatedSpecification | null>;
   generateAllSpecs: (selfEvaluate?: boolean) => Promise<EvaluatedSpecification[]>;
+  setSpecifications: React.Dispatch<React.SetStateAction<EvaluatedSpecification[]>>;
   reset: () => void;
 }
 
@@ -222,6 +223,7 @@ export function useLIDA({ datasetId, userId }: UseLIDAOptions): UseLIDAReturn {
     exploreGoals,
     generateSpec,
     generateAllSpecs,
+    setSpecifications,
     reset,
   };
 }

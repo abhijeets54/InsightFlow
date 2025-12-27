@@ -192,18 +192,22 @@ export async function getCachedDataset(
 
   try {
     const key = `dataset:${userId}:${datasetId}`;
-    let cached: string | null = null;
+    let cached: any = null;
 
     if (redisMode === 'upstash' && upstashRedisClient) {
+      // Upstash automatically parses JSON, so we get an object directly
       cached = await upstashRedisClient.get(key);
     } else if (redisMode === 'local' && localRedisClient) {
-      cached = await localRedisClient.get(key);
+      // Local Redis returns string, so we need to parse it
+      const rawCached = await localRedisClient.get(key);
+      cached = rawCached ? JSON.parse(rawCached) : null;
     } else {
       return null;
     }
 
     if (cached) {
-      const data: CachedDataset = JSON.parse(cached);
+      // If cached is a string (shouldn't happen with Upstash, but just in case)
+      const data: CachedDataset = typeof cached === 'string' ? JSON.parse(cached) : cached;
       console.log(`[Redis] 🎯 Cache HIT for dataset ${datasetId} (${data.rowCount} rows)`);
       return data;
     }
@@ -313,17 +317,21 @@ export async function getCachedAIResponse(cacheKey: string): Promise<any | null>
 
   try {
     const key = `ai:${cacheKey}`;
-    let cached: string | null = null;
+    let cached: any = null;
 
     if (redisMode === 'upstash' && upstashRedisClient) {
+      // Upstash automatically parses JSON, so we get an object directly
       cached = await upstashRedisClient.get(key);
     } else if (redisMode === 'local' && localRedisClient) {
-      cached = await localRedisClient.get(key);
+      // Local Redis returns string, so we need to parse it
+      const rawCached = await localRedisClient.get(key);
+      cached = rawCached ? JSON.parse(rawCached) : null;
     }
 
     if (cached) {
       console.log(`[Redis] 🎯 Cache HIT for AI response: ${cacheKey}`);
-      return JSON.parse(cached);
+      // If cached is a string (shouldn't happen with Upstash, but just in case)
+      return typeof cached === 'string' ? JSON.parse(cached) : cached;
     }
 
     return null;

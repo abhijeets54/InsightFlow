@@ -6,51 +6,131 @@ import { useState, useEffect } from 'react';
 
 interface CorrelationHeatmapProps {
   data: any[];
-  columns?: string[];
+  datasetId: string;
+  userId: string;
 }
 
-export default function CorrelationHeatmap({ data, columns }: CorrelationHeatmapProps) {
+export default function CorrelationHeatmap({ data, datasetId, userId }: CorrelationHeatmapProps) {
   const [correlationData, setCorrelationData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [aiReasoning, setAiReasoning] = useState<string>('');
 
   useEffect(() => {
-    if (data.length === 0) return;
-
-    // Get numeric columns
-    const firstRow = data[0];
-    const numericCols = columns || Object.keys(firstRow).filter(key => {
-      const values = data.map(row => row[key]);
-      const numericValues = values.filter(val => !isNaN(parseFloat(val)) && val !== null && val !== '');
-      return numericValues.length / values.length > 0.8;
-    });
-
-    if (numericCols.length < 2) {
-      setCorrelationData(null);
+    if (data.length === 0) {
+      setLoading(false);
       return;
     }
 
-    // Limit to first 10 columns for readability
-    const limitedCols = numericCols.slice(0, 10);
+    async function fetchAIColumns() {
+      try {
+        setLoading(true);
 
-    // Generate correlation matrix
-    const matrix = generateCorrelationMatrix(data, limitedCols);
+        // Call AI API to get intelligent column selection
+        const response = await fetch('/api/correlation-analysis', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            datasetId,
+            userId,
+            data: data.slice(0, 100), // Send first 100 rows for analysis
+          }),
+        });
 
-    // Transform for Nivo heatmap format
-    const heatmapData = limitedCols.map((row, i) => {
-      const rowData: any = { id: row };
-      limitedCols.forEach((col, j) => {
-        rowData[col] = matrix.matrix[i][j];
+        if (!response.ok) {
+          throw new Error('Failed to fetch AI column selection');
+        }
+
+        const result = await response.json();
+        const aiColumns = result.columns || [];
+        const reasoning = result.reasoning || '';
+
+        console.log('[CorrelationHeatmap] AI selected columns:', aiColumns);
+        console.log('[CorrelationHeatmap] Reasoning:', reasoning);
+
+        if (aiColumns.length < 2) {
+          setCorrelationData(null);
+          setLoading(false);
+          return;
+        }
+
+        setAiReasoning(reasoning);
+
+        // Generate correlation matrix with AI-selected columns
+        const matrix = generateCorrelationMatrix(data, aiColumns);
+
+        // Transform for Nivo heatmap format (nested structure with data arrays)
+        const heatmapData = aiColumns.map((col: string, i: number) => ({
+          id: col,
+          data: aiColumns.map((col2: string, j: number) => ({
+            x: col2,
+            y: matrix.matrix[i][j]
+          }))
+        }));
+
+        setCorrelationData({
+          heatmapData,
+          significantPairs: matrix.significantPairs,
+          columns: aiColumns
+        });
+        setLoading(false);
+      } catch (error) {
+        console.error('[CorrelationHeatmap] Error fetching AI columns:', error);
+        // Fallback to manual selection
+        fallbackColumnSelection();
+      }
+    }
+
+    function fallbackColumnSelection() {
+      const firstRow = data[0];
+      const numericCols = Object.keys(firstRow).filter(key => {
+        const values = data.map(row => row[key]);
+        const numericValues = values.filter(val => !isNaN(parseFloat(val)) && val !== null && val !== '');
+        return numericValues.length / values.length > 0.8;
       });
-      return rowData;
-    });
 
-    setCorrelationData({
-      heatmapData,
-      significantPairs: matrix.significantPairs,
-      columns: limitedCols
-    });
-  }, [data, columns]);
+      if (numericCols.length < 2) {
+        setCorrelationData(null);
+        setLoading(false);
+        return;
+      }
 
-  if (!correlationData) {
+      const limitedCols = numericCols.slice(0, 8);
+      const matrix = generateCorrelationMatrix(data, limitedCols);
+
+      // Transform for Nivo heatmap format (nested structure with data arrays)
+      const heatmapData = limitedCols.map((col, i) => ({
+        id: col,
+        data: limitedCols.map((col2, j) => ({
+          x: col2,
+          y: matrix.matrix[i][j]
+        }))
+      }));
+
+      setCorrelationData({
+        heatmapData,
+        significantPairs: matrix.significantPairs,
+        columns: limitedCols
+      });
+      setAiReasoning('Fallback: Auto-selected numeric columns');
+      setLoading(false);
+    }
+
+    fetchAIColumns();
+  }, [data, datasetId, userId]);
+
+  if (loading) {
+    return (
+      <div className="w-full h-96 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 font-medium">AI is analyzing your dataset...</p>
+          <p className="text-gray-400 text-sm mt-1">Selecting most relevant columns for correlation</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!correlationData || !correlationData.heatmapData || !Array.isArray(correlationData.heatmapData) || correlationData.heatmapData.length === 0) {
     return (
       <div className="w-full h-96 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl">
         <div className="text-center">
@@ -105,6 +185,24 @@ export default function CorrelationHeatmap({ data, columns }: CorrelationHeatmap
 
   return (
     <div className="space-y-6">
+      {/* AI Column Selection Info */}
+      {aiReasoning && (
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 border border-blue-200">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-blue-900 mb-1">AI-Powered Column Selection</p>
+              <p className="text-sm text-blue-700">{aiReasoning}</p>
+              <p className="text-xs text-blue-600 mt-2">
+                Analyzing {correlationData.columns.length} columns: {correlationData.columns.join(', ')}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Heatmap */}
       <div className="h-96">
         <ResponsiveHeatMap

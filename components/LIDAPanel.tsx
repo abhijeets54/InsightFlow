@@ -22,6 +22,7 @@ export default function LIDAPanel({ datasetId, userId, onApplySpec }: LIDAPanelP
     exploreGoals,
     generateSpec,
     generateAllSpecs,
+    setSpecifications,
   } = useLIDA({ datasetId, userId });
 
   const [selectedGoal, setSelectedGoal] = useState<VisualizationGoal | null>(null);
@@ -33,13 +34,29 @@ export default function LIDAPanel({ datasetId, userId, onApplySpec }: LIDAPanelP
   };
 
   const handleExploreGoals = async () => {
-    await exploreGoals(6, 'default');
+    await exploreGoals(3, 'default');
   };
 
   const handleGenerateSpec = async (goal: VisualizationGoal) => {
     setSelectedGoal(goal);
     const spec = await generateSpec(goal, true);
     if (spec) {
+      // Add the spec to the specifications array
+      setSpecifications(prev => {
+        // Check if spec for this goal already exists
+        const existingIndex = prev.findIndex(s =>
+          s.title === spec.title || s.description === spec.description
+        );
+        if (existingIndex >= 0) {
+          // Replace existing spec
+          const updated = [...prev];
+          updated[existingIndex] = spec;
+          return updated;
+        } else {
+          // Add new spec
+          return [...prev, spec];
+        }
+      });
       setSelectedSpec(spec);
       setActiveTab('specs');
     }

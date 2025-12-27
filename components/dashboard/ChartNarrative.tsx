@@ -8,12 +8,54 @@ interface ChartNarrativeProps {
   data: any[];
   columns: string[];
   filters?: any[];
+  aiModeEnabled?: boolean;
 }
 
-export default function ChartNarrative({ chartType, data, columns, filters }: ChartNarrativeProps) {
+export default function ChartNarrative({ chartType, data, columns, filters, aiModeEnabled = false }: ChartNarrativeProps) {
   const [narrative, setNarrative] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Generate cache key based on chart type and data signature
+  const getCacheKey = () => {
+    const columnsStr = columns && columns.length > 0 ? columns.join('_') : 'no_columns';
+    const dataSignature = `${data?.length || 0}_${columnsStr}`;
+    return `chart_narrative_${chartType}_${dataSignature}`;
+  };
+
+  // Early return if required props are missing
+  if (!data || !columns || columns.length === 0) {
+    return null;
+  }
+
+  // Load cached narrative on mount or when chart type changes
+  useEffect(() => {
+    if (!aiModeEnabled) {
+      setNarrative(null);
+      return;
+    }
+
+    const cacheKey = getCacheKey();
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const parsedCache = JSON.parse(cached);
+        const cacheAge = Date.now() - parsedCache.timestamp;
+
+        // Cache valid for 24 hours
+        if (cacheAge < 24 * 60 * 60 * 1000) {
+          console.log(`[ChartNarrative] ✅ Loaded cached insights for ${chartType}`);
+          setNarrative(parsedCache.narrative);
+          return;
+        } else {
+          // Cache expired, remove it
+          localStorage.removeItem(cacheKey);
+        }
+      }
+    } catch (err) {
+      console.error('[ChartNarrative] Cache load error:', err);
+    }
+  }, [chartType, data?.length, columns?.length, aiModeEnabled]);
 
   // Removed auto-generation to prevent 429 errors on Gemini API
   // useEffect(() => {
@@ -49,6 +91,20 @@ export default function ChartNarrative({ chartType, data, columns, filters }: Ch
 
       if (result.success || result.fallback) {
         setNarrative(result.narrative);
+
+        // Cache the narrative
+        const cacheKey = getCacheKey();
+        try {
+          const cacheData = {
+            narrative: result.narrative,
+            timestamp: Date.now(),
+            chartType,
+          };
+          localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+          console.log(`[ChartNarrative] 💾 Cached insights for ${chartType}`);
+        } catch (cacheErr) {
+          console.warn('[ChartNarrative] Failed to cache insights:', cacheErr);
+        }
       } else {
         throw new Error(result.error || 'Failed to generate narrative');
       }
@@ -96,6 +152,11 @@ export default function ChartNarrative({ chartType, data, columns, filters }: Ch
     );
   }
 
+  // Don't show if AI mode is disabled
+  if (!aiModeEnabled) {
+    return null;
+  }
+
   if (!narrative) {
     return (
       <Card className="shadow-large bg-gradient-to-br from-white to-purple-50 border-2 border-dashed border-purple-300">
@@ -105,9 +166,9 @@ export default function ChartNarrative({ chartType, data, columns, filters }: Ch
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">AI-Powered Insights</h3>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">AI-Powered Chart Insights</h3>
           <p className="text-gray-600 mb-6 max-w-sm mx-auto">
-            Generate intelligent insights about your data patterns, trends, and anomalies using Gemini 2.0
+            Generate intelligent insights about this specific chart's patterns, trends, and anomalies using Gemini 2.0
           </p>
           <button
             onClick={generateNarrative}
@@ -117,10 +178,10 @@ export default function ChartNarrative({ chartType, data, columns, filters }: Ch
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
-            Generate Insights
+            Generate Chart Insights
           </button>
           <p className="text-xs text-gray-500 mt-4">
-            Click to analyze your chart data with AI
+            Click to analyze this AI-generated chart with additional insights
           </p>
         </div>
       </Card>

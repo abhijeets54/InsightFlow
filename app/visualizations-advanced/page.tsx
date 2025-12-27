@@ -50,11 +50,14 @@ export default function VisualizationsAdvancedPage() {
   const [pageContext, setPageContext] = useState<VisualizationsContext | null>(null);
 
   // AI Mode state
-  const [useAIMode, setUseAIMode] = useState(true); // Default AI mode ON
+  const [useAIMode, setUseAIMode] = useState(false); // Default AI mode OFF
   const [aiSpec, setAiSpec] = useState<any>(null);
+  const [chartGenerated, setChartGenerated] = useState(false); // Track if AI chart is ready
+
+  // LIDA applied spec state
+  const [lidaAppliedSpec, setLidaAppliedSpec] = useState<any>(null);
 
   // View toggles
-  const [showCorrelation, setShowCorrelation] = useState(false);
   const [showAnomalies, setShowAnomalies] = useState(false);
 
   // ALL chart types - industry grade
@@ -115,8 +118,16 @@ export default function VisualizationsAdvancedPage() {
     const previousType = selectedChartType;
     setSelectedChartType(newType);
     setChartHistory(prev => [...prev, newType]);
+    setChartGenerated(false); // Reset on chart type change
     trackActivity('changed', 'chart_type', { from: previousType, to: newType });
   };
+
+  // Reset chartGenerated when AI mode changes
+  useEffect(() => {
+    if (!useAIMode) {
+      setChartGenerated(false);
+    }
+  }, [useAIMode]);
 
   const handleFilterChange = (newFilteredData: any[]) => {
     setFilteredData(newFilteredData);
@@ -249,16 +260,6 @@ export default function VisualizationsAdvancedPage() {
           {/* Quick Actions */}
           <div className="flex items-center gap-3 flex-wrap">
             <button
-              onClick={() => setShowCorrelation(!showCorrelation)}
-              className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
-                showCorrelation
-                  ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg'
-                  : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-purple-500'
-              }`}
-            >
-              🌡️ {showCorrelation ? 'Hide' : 'Show'} Correlation Matrix
-            </button>
-            <button
               onClick={() => setShowAnomalies(!showAnomalies)}
               className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
                 showAnomalies
@@ -298,6 +299,8 @@ export default function VisualizationsAdvancedPage() {
               data={getDataForVisualization()}
               chartType={selectedChartType}
               selectedColumns={selectedColumns}
+              datasetId={uploadedData.datasetId}
+              userId={user.id}
             />
 
             {/* Anomaly Detection */}
@@ -310,17 +313,17 @@ export default function VisualizationsAdvancedPage() {
               </div>
             )}
 
-            {/* Correlation Matrix */}
-            {showCorrelation && (
-              <Card className="mb-6 shadow-large">
-                <h2 className="text-2xl font-display font-bold text-neutral-900 mb-6">
-                  Correlation Matrix Heatmap
-                </h2>
-                <CorrelationHeatmap
-                  data={getDataForVisualization()}
-                />
-              </Card>
-            )}
+            {/* AI-Powered Correlation Matrix - Temporarily disabled */}
+            {/* <Card className="mb-6 shadow-large">
+              <h2 className="text-2xl font-display font-bold text-neutral-900 mb-6">
+                AI-Powered Correlation Matrix
+              </h2>
+              <CorrelationHeatmap
+                data={getDataForVisualization()}
+                datasetId={uploadedData.datasetId}
+                userId={user.id}
+              />
+            </Card> */}
 
             {/* Filter Panel */}
             {uploadedData && (
@@ -468,6 +471,7 @@ export default function VisualizationsAdvancedPage() {
                           userId={user.id}
                           data={getDataForVisualization()}
                           columns={uploadedData.preview.columns}
+                          onChartReady={() => setChartGenerated(true)}
                         />
                       </>
                     ) : (() => {
@@ -508,8 +512,8 @@ export default function VisualizationsAdvancedPage() {
                     })()}
                 </Card>
 
-                {/* AI-Powered Insights - Chart-Specific Narrative */}
-                {selectedColumns.length > 0 && (
+                {/* AI-Powered Insights - Chart-Specific Narrative (Only in AI Mode) */}
+                {selectedColumns.length > 0 && useAIMode && chartGenerated && (
                   <div className="mt-6">
                     {(() => {
                       const processed = getProcessedChartData(getDataForVisualization());
@@ -519,11 +523,52 @@ export default function VisualizationsAdvancedPage() {
                           data={processed.data}
                           columns={selectedColumns}
                           filters={filters}
+                          aiModeEnabled={useAIMode}
                         />
                       );
                     })()}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* LIDA Applied Chart */}
+            {lidaAppliedSpec && uploadedData && (
+              <div className="mb-6">
+                <Card className="shadow-large">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h2 className="text-2xl font-display font-bold text-neutral-900">
+                        {lidaAppliedSpec.title}
+                      </h2>
+                      <p className="text-sm text-gray-600 mt-1">{lidaAppliedSpec.description}</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-semibold">
+                          LIDA Generated
+                        </span>
+                        <span className={`text-sm font-bold ${lidaAppliedSpec.evaluation.score >= 80 ? 'text-green-600' : lidaAppliedSpec.evaluation.score >= 60 ? 'text-yellow-600' : 'text-red-600'}`}>
+                          Score: {lidaAppliedSpec.evaluation.score}/100
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setLidaAppliedSpec(null)}
+                      className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                      ✕ Close
+                    </button>
+                  </div>
+                  <div className="bg-gradient-to-br from-white to-blue-50 p-4 rounded-xl border border-neutral-200" style={{ height: '500px' }}>
+                    <AdvancedChartDisplay
+                      type={lidaAppliedSpec.chart_type as any}
+                      data={getDataForVisualization()}
+                      title={lidaAppliedSpec.title}
+                      xKey={lidaAppliedSpec.columns?.x}
+                      yKey={lidaAppliedSpec.columns?.y}
+                      groupKey={lidaAppliedSpec.columns?.group}
+                    />
+                  </div>
+                </Card>
               </div>
             )}
 
@@ -534,8 +579,8 @@ export default function VisualizationsAdvancedPage() {
                   datasetId={uploadedData.datasetId}
                   userId={user.id}
                   onApplySpec={(spec) => {
-                    // AI-generated chart specification can be used if needed
-                    console.log('[LIDA] Generated spec:', spec);
+                    console.log('[LIDA] Applying spec:', spec);
+                    setLidaAppliedSpec(spec);
                   }}
                 />
               </div>

@@ -8,18 +8,87 @@ interface DashboardSummaryProps {
   data: any[];
   chartType: string;
   selectedColumns: string[];
+  datasetId: string;
+  userId: string;
 }
 
-export default function DashboardSummary({ data, chartType, selectedColumns }: DashboardSummaryProps) {
+export default function DashboardSummary({ data, chartType, selectedColumns, datasetId, userId }: DashboardSummaryProps) {
   const [summary, setSummary] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [aiReasoning, setAiReasoning] = useState<string>('');
 
   useEffect(() => {
     if (data.length > 0) {
       generateSummary();
     }
-  }, [data, chartType, selectedColumns]);
+  }, [data, chartType, selectedColumns, datasetId, userId]);
 
-  const generateSummary = () => {
+  const generateSummary = async () => {
+    try {
+      setLoading(true);
+
+      // Call AI API to get intelligent column selection
+      const response = await fetch('/api/column-stats-selection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          datasetId,
+          userId,
+          data: data.slice(0, 100), // Send first 100 rows for analysis
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[DashboardSummary] API Error:', response.status, errorText);
+        throw new Error(`Failed to fetch AI column selection: ${response.status}`);
+      }
+
+      const result = await response.json();
+      const aiColumns = result.columns || [];
+      const reasoning = result.reasoning || '';
+
+      console.log('[DashboardSummary] AI selected columns:', aiColumns);
+      console.log('[DashboardSummary] Reasoning:', reasoning);
+
+      setAiReasoning(reasoning);
+
+      const numericCols = getNumericColumns(data);
+      const stats: any = {
+        totalRows: data.length,
+        totalColumns: Object.keys(data[0]).length,
+        numericColumns: numericCols.length,
+        selectedColumns: selectedColumns.length,
+        chartType
+      };
+
+      // Calculate stats for AI-selected columns
+      const columnsToAnalyze = aiColumns.length > 0 ? aiColumns : numericCols.slice(0, 3);
+
+      columnsToAnalyze.forEach((col: string) => {
+        const values = data.map(row => parseFloat(row[col])).filter(v => !isNaN(v));
+        if (values.length > 0) {
+          const sorted = [...values].sort((a, b) => a - b);
+          stats[col] = {
+            min: Math.min(...values),
+            max: Math.max(...values),
+            avg: values.reduce((sum, v) => sum + v, 0) / values.length,
+            median: sorted[Math.floor(sorted.length / 2)],
+            trend: values[values.length - 1] > values[0] ? 'up' : 'down'
+          };
+        }
+      });
+
+      setSummary(stats);
+      setLoading(false);
+    } catch (error) {
+      console.error('[DashboardSummary] Error fetching AI columns:', error);
+      // Fallback to original logic
+      generateSummaryFallback();
+    }
+  };
+
+  const generateSummaryFallback = () => {
     const numericCols = getNumericColumns(data);
     const stats: any = {
       totalRows: data.length,
@@ -45,7 +114,25 @@ export default function DashboardSummary({ data, chartType, selectedColumns }: D
     });
 
     setSummary(stats);
+    setAiReasoning('Fallback: Auto-selected numeric columns');
+    setLoading(false);
   };
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <Card className="md:col-span-4 bg-gradient-to-br from-gray-50 to-gray-100">
+          <div className="flex items-center justify-center py-8">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-3"></div>
+              <p className="text-gray-600 font-medium">AI is analyzing your data...</p>
+              <p className="text-gray-400 text-sm mt-1">Selecting most relevant metrics</p>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   if (!summary) return null;
 
@@ -68,6 +155,18 @@ export default function DashboardSummary({ data, chartType, selectedColumns }: D
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      {/* AI Selection Info Banner */}
+      {aiReasoning && !aiReasoning.toLowerCase().includes('fallback') && (
+        <div className="md:col-span-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3 border border-blue-200">
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+            <p className="text-sm text-blue-700 font-medium">AI-Powered Metrics:</p>
+            <p className="text-sm text-blue-600">{aiReasoning}</p>
+          </div>
+        </div>
+      )}
       {/* Main Summary Card */}
       <Card className="md:col-span-2 bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-large">
         <div className="flex items-start justify-between">
