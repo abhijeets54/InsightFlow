@@ -95,9 +95,9 @@ export async function POST(request: NextRequest) {
           };
         } else if (isNumeric) {
           const nums = numericValues.map((v: any) => parseFloat(v));
-          const sorted = [...nums].sort((a, b) => a - b);
-          const avg = nums.reduce((a, b) => a + b, 0) / nums.length;
-          const variance = nums.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / nums.length;
+          const sorted = [...nums].sort((a: number, b: number) => a - b);
+          const avg = nums.reduce((a: number, b: number) => a + b, 0) / nums.length;
+          const variance = nums.reduce((sum: number, val: number) => sum + Math.pow(val - avg, 2), 0) / nums.length;
 
           columnAnalysis[col] = {
             type: 'numeric',

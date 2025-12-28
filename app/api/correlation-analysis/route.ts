@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
           type: 'numeric',
           min: Math.min(...nums),
           max: Math.max(...nums),
-          avg: nums.reduce((a, b) => a + b, 0) / nums.length,
+          avg: nums.reduce((a: number, b: number) => a + b, 0) / nums.length,
           count: nums.length
         };
       } else {

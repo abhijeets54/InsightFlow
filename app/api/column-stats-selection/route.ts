@@ -58,12 +58,12 @@ export async function POST(request: NextRequest) {
 
         if (isNumeric && numericValues.length > 0) {
           const nums = numericValues.map((v: any) => parseFloat(v));
-          const sorted = [...nums].sort((a, b) => a - b);
+          const sorted = [...nums].sort((a: number, b: number) => a - b);
           columnStats[col] = {
             type: 'numeric',
             min: Math.min(...nums),
             max: Math.max(...nums),
-            avg: nums.reduce((a, b) => a + b, 0) / nums.length,
+            avg: nums.reduce((a: number, b: number) => a + b, 0) / nums.length,
             median: sorted[Math.floor(sorted.length / 2)],
             stdDev: calculateStdDev(nums),
             variance: calculateVariance(nums),
@@ -195,14 +195,14 @@ Return ONLY valid JSON, no other text.`;
 
 // Helper functions
 function calculateStdDev(values: number[]): number {
-  const avg = values.reduce((a, b) => a + b, 0) / values.length;
-  const variance = values.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / values.length;
+  const avg = values.reduce((a: number, b: number) => a + b, 0) / values.length;
+  const variance = values.reduce((sum: number, val: number) => sum + Math.pow(val - avg, 2), 0) / values.length;
   return Math.sqrt(variance);
 }
 
 function calculateVariance(values: number[]): number {
-  const avg = values.reduce((a, b) => a + b, 0) / values.length;
-  return values.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / values.length;
+  const avg = values.reduce((a: number, b: number) => a + b, 0) / values.length;
+  return values.reduce((sum: number, val: number) => sum + Math.pow(val - avg, 2), 0) / values.length;
 }
 
 // Fallback selection based on heuristics

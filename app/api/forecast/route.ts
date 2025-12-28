@@ -157,11 +157,12 @@ export async function POST(request: NextRequest) {
     const forecastsWithBounds = forecasts.map((f, idx) => {
       const periodMultiplier = 1 + (idx * 0.1); // Uncertainty increases over time
       const margin = stdDev * 1.96 * periodMultiplier; // 95% CI
+      const confidenceLevel: 'low' | 'medium' | 'high' = margin / f.predicted < 0.2 ? 'high' : margin / f.predicted < 0.5 ? 'medium' : 'low';
       return {
         ...f,
         lowerBound: f.predicted - margin,
         upperBound: f.predicted + margin,
-        confidence: margin / f.predicted < 0.2 ? 'high' : margin / f.predicted < 0.5 ? 'medium' : 'low'
+        confidence: confidenceLevel
       };
     });
 
