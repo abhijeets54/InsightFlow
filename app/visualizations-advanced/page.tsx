@@ -57,6 +57,11 @@ export default function VisualizationsAdvancedPage() {
   // LIDA applied spec state
   const [lidaAppliedSpec, setLidaAppliedSpec] = useState<any>(null);
 
+  // Full context data for AI assistant
+  const [chartInsights, setChartInsights] = useState<any>(null);
+  const [lidaData, setLidaData] = useState<any>(null);
+  const [chartNarrative, setChartNarrative] = useState<any>(null);
+
   // View toggles
   const [showAnomalies, setShowAnomalies] = useState(false);
 
@@ -93,11 +98,22 @@ export default function VisualizationsAdvancedPage() {
         chartData,
         filters,
         aggregationMethod,
-        chartHistory
+        chartHistory,
+        useAIMode,
+        chartInsights,
+        lidaData,
+        aiSpec,
+        lidaAppliedSpec,
+        chartNarrative
       );
       setPageContext(context);
+
+      // Save to sessionStorage for cross-page access
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('visualizations_context', JSON.stringify(context));
+      }
     }
-  }, [selectedChartType, selectedColumns, filteredData, filters, uploadedData, aggregationMethod, chartHistory]);
+  }, [selectedChartType, selectedColumns, filteredData, filters, uploadedData, aggregationMethod, chartHistory, useAIMode, chartInsights, lidaData, aiSpec, lidaAppliedSpec, chartNarrative]);
 
   const checkUser = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -524,6 +540,7 @@ export default function VisualizationsAdvancedPage() {
                           columns={selectedColumns}
                           filters={filters}
                           aiModeEnabled={useAIMode}
+                          onNarrativeGenerated={(narrative) => setChartNarrative(narrative)}
                         />
                       );
                     })()}
@@ -581,6 +598,7 @@ export default function VisualizationsAdvancedPage() {
                   onApplySpec={(spec) => {
                     console.log('[LIDA] Applying spec:', spec);
                     setLidaAppliedSpec(spec);
+                    setLidaData(spec); // Store full LIDA data for context
                   }}
                 />
               </div>

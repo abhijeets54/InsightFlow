@@ -124,9 +124,11 @@ ${ctx.insights.map((ins, i) => `${i + 1}. ${ins.type.toUpperCase()} INSIGHT: "${
 
   const forecastContext = ctx.forecast?.available
     ? `\nVISIBLE FORECAST ON PAGE:
-Trend: ${ctx.forecast.trend} (${ctx.forecast.confidence && (ctx.forecast.confidence * 100).toFixed(0)}% confidence)
-Summary: ${ctx.forecast.summary}
+Trend: ${ctx.forecast.trend} (${ctx.forecast.confidence || 'medium'} confidence)
+Summary: ${ctx.forecast.summary || 'Forecast available'}
 Predictions: ${JSON.stringify(ctx.forecast.predictions?.slice(0, 5) || [])}
+Industry: ${ctx.forecast.industry || 'general'}
+Historical Patterns: ${ctx.forecast.historicalPatterns ? JSON.stringify(ctx.forecast.historicalPatterns) : 'N/A'}
 Status: Currently displayed to user
 `
     : '';

@@ -8,7 +8,7 @@ interface ForecastPanelProps {
   datasetId: string;
   userId: string;
   columns: string[];
-  onForecastGenerated?: (forecast: any) => void;
+  onForecastGenerated?: (forecast: any, rawData?: any) => void;
 }
 
 export default function ForecastPanel({ datasetId, userId, columns, onForecastGenerated }: ForecastPanelProps) {
@@ -41,9 +41,9 @@ export default function ForecastPanel({ datasetId, userId, columns, onForecastGe
 
       setForecastData(data.forecast);
 
-      // Notify parent of new forecast
+      // Notify parent of new forecast with raw data
       if (onForecastGenerated) {
-        onForecastGenerated(data.forecast);
+        onForecastGenerated(data.forecast, data);
       }
     } catch (err: any) {
       setError(err.message || 'Failed to generate forecast');

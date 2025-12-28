@@ -29,9 +29,15 @@ export interface AnalyticsContext extends BasePageContext {
   forecast: {
     available: boolean;
     trend?: string;
-    confidence?: number;
-    summary?: string;
+    confidence?: string;
+    summary?: any;
     predictions?: any[];
+    dateColumn?: string;
+    valueColumn?: string;
+    industry?: string;
+    historicalPatterns?: any;
+    confidenceBounds?: any;
+    fullForecastData?: any;
   } | null;
   statistics: {
     rowCount: number;
@@ -42,6 +48,8 @@ export interface AnalyticsContext extends BasePageContext {
   };
   visiblePanels: string[];
   timeOnPage: number;
+  fullInsightsData?: any[];
+  rawForecastData?: any;
 }
 
 export interface VisualizationsContext extends BasePageContext {
@@ -65,6 +73,12 @@ export interface VisualizationsContext extends BasePageContext {
   recommendations: string[];
   chartHistory: string[];
   comparisonMode: boolean;
+  aiModeEnabled?: boolean;
+  chartInsights?: any;
+  lidaData?: any;
+  aiConfigData?: any;
+  lidaAppliedSpec?: any;
+  chartNarrative?: any;
 }
 
 // Session management
@@ -117,7 +131,9 @@ export function collectAnalyticsContext(
   insights: any[],
   forecastData: any | null,
   uploadedData: any,
-  visiblePanels: string[] = []
+  visiblePanels: string[] = [],
+  fullInsightsData?: any[],
+  rawForecastData?: any
 ): AnalyticsContext {
   const timeOnPage = Math.floor((Date.now() - pageLoadTime) / 1000);
 
@@ -129,14 +145,20 @@ export function collectAnalyticsContext(
     impact: insight.impact || 'medium',
   }));
 
-  // Process forecast
+  // Process forecast with comprehensive data
   const forecast = forecastData
     ? {
         available: true,
-        trend: forecastData.trend || 'stable',
-        confidence: forecastData.confidence || 0.5,
+        trend: forecastData.summary?.trend || forecastData.trend || 'stable',
+        confidence: forecastData.summary?.confidence || forecastData.confidence || 'medium',
         summary: forecastData.summary || 'Forecast available',
-        predictions: forecastData.predictions || [],
+        predictions: forecastData.data || forecastData.predictions || [],
+        dateColumn: forecastData.dateColumn,
+        valueColumn: forecastData.valueColumn,
+        industry: forecastData.industry,
+        historicalPatterns: forecastData.historicalPatterns,
+        confidenceBounds: forecastData.confidenceBounds,
+        fullForecastData: rawForecastData || forecastData,
       }
     : null;
 
@@ -164,6 +186,8 @@ export function collectAnalyticsContext(
     },
     visiblePanels,
     timeOnPage,
+    fullInsightsData: fullInsightsData || insights,
+    rawForecastData: rawForecastData || forecastData,
   };
 }
 
@@ -176,7 +200,13 @@ export function collectVisualizationsContext(
   chartData: any[],
   filters: any[] = [],
   aggregation: string = 'none',
-  chartHistory: string[] = []
+  chartHistory: string[] = [],
+  aiModeEnabled?: boolean,
+  chartInsights?: any,
+  lidaData?: any,
+  aiConfigData?: any,
+  lidaAppliedSpec?: any,
+  chartNarrative?: any
 ): VisualizationsContext {
   // Get top values from chart data
   const topValues = getTopValuesFromChart(chartData, selectedColumns[0]);
@@ -209,6 +239,12 @@ export function collectVisualizationsContext(
     recommendations,
     chartHistory,
     comparisonMode: false,
+    aiModeEnabled: aiModeEnabled,
+    chartInsights: chartInsights,
+    lidaData: lidaData,
+    aiConfigData: aiConfigData,
+    lidaAppliedSpec: lidaAppliedSpec,
+    chartNarrative: chartNarrative,
   };
 }
 

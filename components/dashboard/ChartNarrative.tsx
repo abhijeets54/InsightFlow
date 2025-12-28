@@ -9,9 +9,10 @@ interface ChartNarrativeProps {
   columns: string[];
   filters?: any[];
   aiModeEnabled?: boolean;
+  onNarrativeGenerated?: (narrative: any) => void;
 }
 
-export default function ChartNarrative({ chartType, data, columns, filters, aiModeEnabled = false }: ChartNarrativeProps) {
+export default function ChartNarrative({ chartType, data, columns, filters, aiModeEnabled = false, onNarrativeGenerated }: ChartNarrativeProps) {
   const [narrative, setNarrative] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,6 +47,10 @@ export default function ChartNarrative({ chartType, data, columns, filters, aiMo
         if (cacheAge < 24 * 60 * 60 * 1000) {
           console.log(`[ChartNarrative] ✅ Loaded cached insights for ${chartType}`);
           setNarrative(parsedCache.narrative);
+          // Notify parent of cached narrative
+          if (onNarrativeGenerated) {
+            onNarrativeGenerated(parsedCache.narrative);
+          }
           return;
         } else {
           // Cache expired, remove it
@@ -91,6 +96,11 @@ export default function ChartNarrative({ chartType, data, columns, filters, aiMo
 
       if (result.success || result.fallback) {
         setNarrative(result.narrative);
+
+        // Notify parent component
+        if (onNarrativeGenerated) {
+          onNarrativeGenerated(result.narrative);
+        }
 
         // Cache the narrative
         const cacheKey = getCacheKey();

@@ -7,18 +7,67 @@ import { supabase } from '@/lib/supabase';
 import Navigation from '@/components/layout/Navigation';
 import Footer from '@/components/layout/Footer';
 import Card from '@/components/ui/Card';
-import ChatAssistant from '@/components/dashboard/ChatAssistant';
+import ContextAwareChatAssistant from '@/components/dashboard/ContextAwareChatAssistant';
 import { useDataStore } from '@/store/useDataStore';
+import { BasePageContext } from '@/lib/context-collectors';
 
 export default function AIAssistantPage() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const { uploadedData } = useDataStore();
+  const { uploadedData, getFullData } = useDataStore();
   const router = useRouter();
+
+  // Combined context from all pages (contains analytics, visualizations, and dataset)
+  const [unifiedContext, setUnifiedContext] = useState<any>(null);
 
   useEffect(() => {
     checkUser();
   }, []);
+
+  // Load and combine context from sessionStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const analyticsCtx = sessionStorage.getItem('analytics_context');
+      const visualizationsCtx = sessionStorage.getItem('visualizations_context');
+
+      let combined: any = {
+        pageType: 'general',
+        timestamp: Date.now(),
+        sessionId: Date.now().toString(),
+        userActivity: [],
+      };
+
+      if (analyticsCtx) {
+        try {
+          const parsedAnalytics = JSON.parse(analyticsCtx);
+          combined.analytics = parsedAnalytics;
+        } catch (e) {
+          console.error('Failed to parse analytics context:', e);
+        }
+      }
+
+      if (visualizationsCtx) {
+        try {
+          const parsedViz = JSON.parse(visualizationsCtx);
+          combined.visualizations = parsedViz;
+        } catch (e) {
+          console.error('Failed to parse visualizations context:', e);
+        }
+      }
+
+      // Add full dataset to context
+      if (uploadedData) {
+        combined.fullDataset = getFullData() || uploadedData.preview?.sampleRows || [];
+        combined.datasetMetadata = {
+          rowCount: uploadedData.preview?.rowCount,
+          columnCount: uploadedData.preview?.columnCount,
+          columns: uploadedData.preview?.columns,
+        };
+      }
+
+      setUnifiedContext(combined);
+    }
+  }, [uploadedData]);
 
   const checkUser = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -129,6 +178,27 @@ export default function AIAssistantPage() {
               </Card>
             </div>
 
+            {/* Context Indicator */}
+            {unifiedContext && (unifiedContext.analytics || unifiedContext.visualizations) && (
+              <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-blue-900">Enhanced AI Context Active</p>
+                    <p className="text-xs text-blue-700 mt-1">
+                      AI has access to:
+                      {unifiedContext.analytics && ' Analytics insights & forecasts'}
+                      {unifiedContext.analytics && unifiedContext.visualizations && ' •'}
+                      {unifiedContext.visualizations && ' Visualization data & chart insights'}
+                      {' • Full dataset'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* AI Chat Interface */}
             <Card className="shadow-medium">
               <div className="mb-6">
@@ -137,13 +207,16 @@ export default function AIAssistantPage() {
                 </h2>
                 <p className="text-neutral-600 text-sm">
                   Try asking: "What are the top 5 values?", "Show me trends", "Calculate the average"
+                  {unifiedContext?.analytics && ", \"Summarize the forecast insights\""}
+                  {unifiedContext?.visualizations && ", \"What patterns did the charts reveal?\""}
                 </p>
               </div>
 
-              <ChatAssistant
+              <ContextAwareChatAssistant
                 datasetId={uploadedData?.datasetId}
                 userId={user.id}
-                dataPreview={uploadedData?.preview?.fullData || uploadedData?.preview?.sampleRows || []}
+                dataPreview={getFullData() || uploadedData?.preview?.fullData || uploadedData?.preview?.sampleRows || []}
+                pageContext={unifiedContext}
               />
             </Card>
 

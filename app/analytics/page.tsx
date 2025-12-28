@@ -40,6 +40,10 @@ export default function AnalyticsPage() {
   const [visiblePanels, setVisiblePanels] = useState<string[]>(['insights', 'forecast']);
   const [pageContext, setPageContext] = useState<AnalyticsContext | null>(null);
 
+  // Store full data for context
+  const [fullInsightsData, setFullInsightsData] = useState<any[]>([]);
+  const [rawForecastData, setRawForecastData] = useState<any>(null);
+
   useEffect(() => {
     initializeSession();
     checkUser();
@@ -53,11 +57,18 @@ export default function AnalyticsPage() {
         insights,
         forecastData,
         uploadedData,
-        visiblePanels
+        visiblePanels,
+        fullInsightsData,
+        rawForecastData
       );
       setPageContext(context);
+
+      // Save to sessionStorage for cross-page access
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('analytics_context', JSON.stringify(context));
+      }
     }
-  }, [insights, forecastData, uploadedData, visiblePanels]);
+  }, [insights, forecastData, uploadedData, visiblePanels, fullInsightsData, rawForecastData]);
 
   const checkUser = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -71,13 +82,15 @@ export default function AnalyticsPage() {
     setLoading(false);
   };
 
-  const handleInsightsGenerated = (generatedInsights: any[]) => {
+  const handleInsightsGenerated = (generatedInsights: any[], fullData?: any) => {
     setInsights(generatedInsights);
+    setFullInsightsData(fullData || generatedInsights);
     trackActivity('viewed', 'insights_panel', { count: generatedInsights.length });
   };
 
-  const handleForecastGenerated = (forecast: any) => {
+  const handleForecastGenerated = (forecast: any, rawData?: any) => {
     setForecastData(forecast);
+    setRawForecastData(rawData || forecast);
     trackActivity('viewed', 'forecast_panel');
   };
 

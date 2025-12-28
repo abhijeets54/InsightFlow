@@ -16,7 +16,7 @@ interface SmartInsightsPanelProps {
   datasetId: string;
   userId: string;
   data: any[];
-  onInsightsGenerated?: (insights: Insight[]) => void;
+  onInsightsGenerated?: (insights: Insight[], fullData?: any) => void;
 }
 
 export default function SmartInsightsPanel({ datasetId, userId, data, onInsightsGenerated }: SmartInsightsPanelProps) {
@@ -38,7 +38,7 @@ export default function SmartInsightsPanel({ datasetId, userId, data, onInsights
           setLastUpdated(timestamp);
           // Notify parent of cached insights
           if (onInsightsGenerated) {
-            onInsightsGenerated(cachedInsights);
+            onInsightsGenerated(cachedInsights, { insights: cachedInsights });
           }
         } catch (error) {
           console.error('Error loading cached insights:', error);
@@ -85,9 +85,9 @@ export default function SmartInsightsPanel({ datasetId, userId, data, onInsights
         }));
         setLastUpdated(timestamp);
 
-        // Notify parent of new insights
+        // Notify parent of new insights with full data
         if (onInsightsGenerated) {
-          onInsightsGenerated(result.insights);
+          onInsightsGenerated(result.insights, result);
         }
       }
     } catch (error) {
