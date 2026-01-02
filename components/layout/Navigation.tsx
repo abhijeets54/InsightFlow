@@ -61,15 +61,15 @@ export default function Navigation({ user, onLogout }: NavigationProps) {
   ];
 
   return (
-    <nav className="bg-white border-b border-neutral-200 shadow-soft">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-forest-900/80 backdrop-blur-xl border-b border-neutral-200 dark:border-forest-700/50 shadow-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-2">
+        <div className="flex justify-between items-center py-3">
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-3">
-              <Image 
-                src="/logo.png" 
-                alt="InsightFlow" 
+              <Image
+                src="/logo.png"
+                alt="InsightFlow"
                 width={70}
                 height={70}
                 className="h-16 w-16 rounded-full"
@@ -78,7 +78,7 @@ export default function Navigation({ user, onLogout }: NavigationProps) {
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-1">
+          <div className="hidden md:flex items-center space-x-2">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
               return (
@@ -86,16 +86,21 @@ export default function Navigation({ user, onLogout }: NavigationProps) {
                   key={item.name}
                   href={item.href}
                   className={`
-                    px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
-                    flex items-center space-x-2
+                    px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300
+                    flex items-center space-x-2 group relative overflow-hidden
                     ${isActive
-                      ? 'bg-jasmine-100 text-forest-700 border border-forest-300'
-                      : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
+                      ? 'bg-forest-600 dark:bg-jasmine-500/90 text-white dark:text-forest-900 shadow-lg shadow-forest-600/50 dark:shadow-jasmine-500/50'
+                      : 'text-neutral-700 dark:text-jasmine-100 hover:bg-neutral-100 dark:hover:bg-forest-700/50 hover:text-forest-600 dark:hover:text-jasmine-300'
                     }
                   `}
                 >
-                  {item.icon}
-                  <span>{item.name}</span>
+                  <span className={`transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>
+                    {item.icon}
+                  </span>
+                  <span className="tracking-wide">{item.name}</span>
+                  {isActive && (
+                    <span className="absolute inset-0 bg-linear-to-r from-jasmine-400/0 via-jasmine-200/20 to-jasmine-400/0 animate-shimmer" />
+                  )}
                 </Link>
               );
             })}
@@ -105,12 +110,12 @@ export default function Navigation({ user, onLogout }: NavigationProps) {
           <div className="flex items-center space-x-4">
             {user ? (
               <>
-                <span className="text-sm text-neutral-600 hidden sm:block">
+                <span className="text-sm text-neutral-700 dark:text-jasmine-200 hidden sm:block font-medium">
                   Hi, {user.email.split('@')[0]}
                 </span>
                 <Link
                   href="/profile"
-                  className="px-4 py-2 bg-forest-500 text-white rounded-lg hover:bg-forest-600 transition-colors text-sm font-medium shadow-soft"
+                  className="px-5 py-2.5 bg-forest-600 dark:bg-jasmine-500 text-white dark:text-forest-900 rounded-xl hover:bg-forest-700 dark:hover:bg-jasmine-400 transition-all duration-300 text-sm font-semibold shadow-lg hover:shadow-xl hover:scale-105"
                 >
                   Profile
                 </Link>
@@ -119,13 +124,13 @@ export default function Navigation({ user, onLogout }: NavigationProps) {
               <>
                 <Link
                   href="/login"
-                  className="text-neutral-700 hover:text-forest-600 px-4 py-2 text-sm font-medium"
+                  className="text-neutral-700 dark:text-jasmine-200 hover:text-forest-600 dark:hover:text-jasmine-400 px-5 py-2.5 text-sm font-semibold transition-colors duration-300"
                 >
                   Sign In
                 </Link>
                 <Link
                   href="/signup"
-                  className="px-4 py-2 bg-forest-500 text-white rounded-lg hover:bg-forest-600 transition-colors text-sm font-medium shadow-soft"
+                  className="px-5 py-2.5 bg-forest-600 dark:bg-jasmine-500 text-white dark:text-forest-900 rounded-xl hover:bg-forest-700 dark:hover:bg-jasmine-400 transition-all duration-300 text-sm font-semibold shadow-lg hover:shadow-xl hover:scale-105"
                 >
                   Get Started
                 </Link>
@@ -135,7 +140,7 @@ export default function Navigation({ user, onLogout }: NavigationProps) {
             {/* Mobile menu button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg text-neutral-600 hover:bg-neutral-100"
+              className="md:hidden p-2 rounded-lg text-neutral-700 dark:text-jasmine-200 hover:bg-neutral-100 dark:hover:bg-forest-700/50 transition-colors duration-300"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -147,8 +152,8 @@ export default function Navigation({ user, onLogout }: NavigationProps) {
 
       {/* Mobile Navigation */}
       {isMobileMenuOpen && (
-        <div className="md:hidden border-t border-neutral-200 bg-white">
-          <div className="px-4 py-3 space-y-1">
+        <div className="md:hidden border-t border-neutral-200 dark:border-forest-700/50 bg-white/95 dark:bg-forest-800/95 backdrop-blur-lg">
+          <div className="px-4 py-3 space-y-2">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
               return (
@@ -156,10 +161,10 @@ export default function Navigation({ user, onLogout }: NavigationProps) {
                   key={item.name}
                   href={item.href}
                   className={`
-                    flex items-center space-x-3 px-4 py-3 rounded-lg text-base font-medium
+                    flex items-center space-x-3 px-5 py-3.5 rounded-xl text-base font-semibold transition-all duration-300
                     ${isActive
-                      ? 'bg-primary-50 text-primary-700'
-                      : 'text-neutral-600 hover:bg-neutral-100'
+                      ? 'bg-forest-600 dark:bg-jasmine-500/90 text-white dark:text-forest-900 shadow-lg'
+                      : 'text-neutral-700 dark:text-jasmine-100 hover:bg-neutral-100 dark:hover:bg-forest-700/50 hover:text-forest-600 dark:hover:text-jasmine-300'
                     }
                   `}
                   onClick={() => setIsMobileMenuOpen(false)}

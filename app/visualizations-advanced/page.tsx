@@ -223,7 +223,7 @@ export default function VisualizationsAdvancedPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-jasmine-500">
+      <div className="min-h-screen flex items-center justify-center bg-neutral-950">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-forest-200 border-t-forest-600 mx-auto"></div>
           <p className="mt-4 text-neutral-900 font-semibold">Loading advanced visualizations...</p>
@@ -233,33 +233,37 @@ export default function VisualizationsAdvancedPage() {
   }
 
   return (
-    <div className="min-h-screen bg-jasmine-500">
+    <div className="min-h-screen bg-neutral-950">
       <Navigation user={user} onLogout={handleLogout} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-start justify-between mb-4">
+        <div className="mb-12 animate-fade-in-up">
+          <div className="flex items-start justify-between mb-6">
             <div>
-              <h1 className="text-4xl font-display font-bold text-neutral-900 mb-2 flex items-center gap-3">
-                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Advanced Visualizations
+              <div className="inline-block px-5 py-2 bg-maroon-600/20 border border-maroon-600/50 text-maroon-400 rounded-full text-sm font-semibold mb-6">
+                <span className="flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
+                    <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
+                  </svg>
+                  Visualization Builder
                 </span>
-                <span className="px-3 py-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-sm rounded-full font-semibold shadow-lg">
-                  AI-Powered
-                </span>
+              </div>
+              <h1 className="text-5xl sm:text-6xl font-display font-bold text-white mb-4 leading-tight">
+                Interactive Visualizations
               </h1>
-              <p className="text-neutral-600">
-                Industry-grade charts with AI narratives, anomaly detection, and statistical analysis
+              <p className="text-xl text-neutral-400 max-w-3xl">
+                Create stunning charts with 15+ types, AI-powered insights, and real-time analysis
               </p>
               {uploadedData && (
-                <div className="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
-                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-forest-900/60 backdrop-blur-xl border border-forest-700/50 text-jasmine-400 text-sm font-semibold rounded-xl">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
                   </svg>
-                  Visualizing {getDataForVisualization().length.toLocaleString()} data points
+                  <span className="text-white font-bold">{getDataForVisualization().length.toLocaleString()}</span> data points
                   {uploadedData?.preview?.isComplete === false && (
-                    <span className="ml-1 text-amber-700">(Sampled using {uploadedData?.preview?.samplingMethod || 'Smart Sampling'} from {uploadedData?.preview?.rowCount?.toLocaleString()} total rows)</span>
+                    <span className="ml-1 text-neutral-400 text-xs">({uploadedData?.preview?.samplingMethod || 'Smart'} sampled from {uploadedData?.preview?.rowCount?.toLocaleString()})</span>
                   )}
                 </div>
               )}
@@ -274,19 +278,19 @@ export default function VisualizationsAdvancedPage() {
           </div>
 
           {/* Quick Actions */}
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap mt-6">
             <button
               onClick={() => setShowAnomalies(!showAnomalies)}
-              className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
+              className={`px-5 py-3 rounded-xl font-bold text-sm transition-all duration-300 ${
                 showAnomalies
-                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg'
-                  : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-amber-500'
+                  ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30 scale-105'
+                  : 'bg-forest-900/60 backdrop-blur-xl border border-forest-700/50 text-jasmine-300 hover:border-amber-500/50'
               }`}
             >
               ⚠️ {showAnomalies ? 'Hide' : 'Detect'} Anomalies
             </button>
-            <div className="ml-auto text-sm text-gray-600 flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <div className="ml-auto text-sm text-jasmine-400 flex items-center gap-2 font-medium">
+              <div className="w-2 h-2 bg-forest-400 rounded-full animate-pulse"></div>
               <span>Real-time analysis active</span>
             </div>
           </div>
@@ -300,7 +304,7 @@ export default function VisualizationsAdvancedPage() {
               </svg>
             </div>
             <h3 className="text-xl font-semibold text-neutral-900 mb-2">No Data Available</h3>
-            <p className="text-neutral-600 mb-6">Upload a dataset to unlock advanced visualizations</p>
+            <p className="text-neutral-400 mb-6">Upload a dataset to unlock advanced visualizations</p>
             <button
               onClick={() => router.push('/dashboard')}
               className="px-6 py-3 bg-forest-500 text-white rounded-lg hover:bg-forest-600 transition-all shadow-medium hover:shadow-large font-semibold"
@@ -391,7 +395,7 @@ export default function VisualizationsAdvancedPage() {
                   <label className="block text-sm font-semibold text-neutral-900 mb-1">
                     🤖 AI-Powered Auto-Visualization
                   </label>
-                  <p className="text-xs text-neutral-600">
+                  <p className="text-xs text-neutral-400">
                     Let AI analyze your data and automatically generate optimal chart configurations
                   </p>
                 </div>
@@ -443,7 +447,7 @@ export default function VisualizationsAdvancedPage() {
                       <span className={`text-sm font-bold block ${selectedChartType === chart.id ? 'text-white' : 'text-neutral-900'}`}>
                         {chart.name}
                       </span>
-                      <span className={`text-xs block mt-1 ${selectedChartType === chart.id ? 'text-white/80' : 'text-neutral-600'}`}>
+                      <span className={`text-xs block mt-1 ${selectedChartType === chart.id ? 'text-white/80' : 'text-neutral-400'}`}>
                         {chart.description}
                       </span>
                     </div>
@@ -461,7 +465,7 @@ export default function VisualizationsAdvancedPage() {
                   </svg>
                 </div>
                 <h3 className="text-xl font-semibold text-neutral-900 mb-2">Select Columns to Visualize</h3>
-                <p className="text-neutral-600">Choose at least one column from above to create beautiful charts</p>
+                <p className="text-neutral-400">Choose at least one column from above to create beautiful charts</p>
               </Card>
             ) : (
               <div className="mb-6">

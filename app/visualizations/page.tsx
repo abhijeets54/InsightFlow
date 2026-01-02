@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
@@ -15,6 +15,7 @@ import ChartRecommendations from '@/components/dashboard/ChartRecommendations';
 import Toast from '@/components/ui/Toast';
 import ContextAwareChatAssistant from '@/components/dashboard/ContextAwareChatAssistant';
 import FilterPanel from '@/components/dashboard/FilterPanel';
+import ExportButton from '@/components/ui/ExportButton';
 import { useDataStore } from '@/store/useDataStore';
 import {
   initializeSession,
@@ -56,6 +57,10 @@ export default function VisualizationsPage() {
   const [useAIMode, setUseAIMode] = useState(true); // Default to AI mode ON
   const [aiSpec, setAiSpec] = useState<any>(null);
   const [showLIDAPanel, setShowLIDAPanel] = useState(false);
+
+  // Refs for chart export
+  const mainChartRef = useRef<HTMLDivElement>(null);
+  const chartRefs = [mainChartRef] as React.RefObject<HTMLDivElement>[];
 
   const chartTypes = [
     { id: 'bar', name: 'Bar Chart', icon: '📊', color: 'from-forest-500 to-forest-600' },
@@ -106,11 +111,6 @@ export default function VisualizationsPage() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push('/login');
-  };
-
-  const handleExportChart = () => {
-    setToastMessage('Chart export feature coming soon!');
-    setShowToast(true);
   };
 
   const handleChartTypeChange = (newType: 'bar' | 'line' | 'area' | 'pie' | 'scatter' | 'stacked-bar' | 'box-plot' | 'heatmap') => {
@@ -443,15 +443,12 @@ export default function VisualizationsPage() {
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <button
-                      onClick={handleExportChart}
-                      className="px-4 py-2 bg-white border-2 border-neutral-300 text-neutral-700 rounded-lg hover:bg-neutral-50 transition-all duration-200 shadow-soft hover:shadow-medium font-semibold flex items-center gap-2"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
-                      Export
-                    </button>
+                    <ExportButton
+                      data={getFilteredData(getDataForVisualization())}
+                      chartRefs={chartRefs}
+                      fileName={`visualization-${selectedChartType}`}
+                      title={`${chartTypes.find(c => c.id === selectedChartType)?.name} Visualization`}
+                    />
                     <button
                       onClick={() => router.push('/dashboard')}
                       className="px-4 py-2 bg-forest-500 text-white rounded-lg hover:bg-forest-600 transition-all duration-200 shadow-medium hover:shadow-large font-semibold flex items-center gap-2"
@@ -463,7 +460,7 @@ export default function VisualizationsPage() {
                     </button>
                   </div>
                 </div>
-                <div className="bg-gradient-to-br from-white to-jasmine-50 p-8 rounded-xl border border-neutral-200">
+                <div ref={mainChartRef} className="bg-gradient-to-br from-white to-jasmine-50 p-8 rounded-xl border border-neutral-200">
                   {loadingCharts ? (
                     <div className="flex items-center justify-center h-96">
                       <div className="animate-spin rounded-full h-16 w-16 border-4 border-forest-200 border-t-forest-600"></div>
